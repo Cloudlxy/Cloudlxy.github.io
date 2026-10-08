@@ -114,3 +114,6 @@ deploy:
   repo: https://github.com/Cloudlxy/Cloudlxy.github.io.git
   branch: gh-pages
   message: "Site updated: {{ now('yyyy-MM-dd HH:mm:ss') }}"
+  # 必须设为 false，否则部署时会丢掉以 . 开头的文件，
+  # 也就是 .nojekyll 传不上去（hexo-fs 的 copyDir 默认 ignoreHidden=true）
+  ignore_hidden: false
