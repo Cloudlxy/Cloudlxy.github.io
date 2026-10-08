@@ -150,6 +150,31 @@ npm install --cache ./.npm-cache --ignore-scripts
 `--cache` 把缓存放到项目内，`--ignore-scripts` 跳过依赖的安装脚本。
 普通桌面环境下不需要这两个参数。
 
+### 5. 主题配置只能「加」不能「删」（deepMerge）
+
+`_config.landscape.yml` 不是替换主题自带配置，而是**深合并**进去。Hexo 源码里就是这一行：
+
+```js
+ctx.theme.config = deepMerge(ctx.theme.config, ctx.config.theme_config)
+```
+
+深合并只能新增键、或覆盖同名键的值，**删不掉键**。而 landscape 主题自带的 `_config.yml`
+里写死了 `Home` / `Archives` 两个菜单项，所以我们定义中文菜单后，导航会变成
+`Home / Archives / 首页 / 归档 / 标签 / 分类` 六项、两组重复。
+
+`scripts/theme-menu.js` 就是用来擦掉这两个英文键的：
+
+```js
+hexo.extend.filter.register('before_generate', () => {
+  delete hexo.theme.config.menu.Home;
+  delete hexo.theme.config.menu.Archives;
+});
+```
+
+`scripts/` 是 Hexo 的官方扩展点，会在启动时自动加载，不会被 `npm install` 覆盖。
+以后如果发现主题里**别的**配置项也是「只能改值、不能删项」（比如 `widgets`、`links`），
+可以在同一个文件里用同样办法处理。换了主题之后这个文件可以直接删。
+
 ## 换主题
 
 以 Fluid 为例：
@@ -171,11 +196,13 @@ theme: fluid
 
 ```
 ├── _config.yml            # 站点总配置（网址、根路径、部署）★改这里
-├── _config.landscape.yml  # 当前主题配置
+├── _config.landscape.yml  # 当前主题配置（会被深合并进主题默认配置）
+├── scripts/               # Hexo 扩展脚本（theme-menu.js 修正导航重复）
 ├── scaffolds/             # 新建文章的模板（post / page / draft）
 ├── source/
 │   ├── _posts/            # 文章★写这里
-│   └── favicon.png        # 站点图标
+│   ├── favicon.png        # 站点图标
+│   └── .nojekyll          # 让 GitHub Pages 跳过 Jekyll，必须配合 ignore_hidden: false
 ├── public/                # 生成结果（已 gitignore，勿手改）
 └── package.json
 ```
