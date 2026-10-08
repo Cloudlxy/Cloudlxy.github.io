@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <author>
+    <name>Cloudlxy</name>
+  </author>
+  <generator uri="https://hexo.io/">Hexo</generator>
+  <icon>https://cloudlxy.github.io/XiaoyuBlog/favicon.png</icon>
+  <id>https://cloudlxy.github.io/XiaoyuBlog/</id>
+  <link href="https://cloudlxy.github.io/XiaoyuBlog/" rel="alternate"/>
+  <link href="https://cloudlxy.github.io/XiaoyuBlog/atom.xml" rel="self"/>
+  <rights>All rights reserved 2026, Cloudlxy</rights>
+  <subtitle>记录、思考与成长</subtitle>
+  <title>晓宇的博客</title>
+  <updated>2026-10-08T09:43:46.381Z</updated>
+  <entry>
+    <author>
+      <name>Cloudlxy</name>
+    </author>
+    <category term="折腾记录" scheme="https://cloudlxy.github.io/XiaoyuBlog/categories/notes/"/>
+    <category term="Hexo" scheme="https://cloudlxy.github.io/XiaoyuBlog/tags/Hexo/"/>
+    <category term="GitHub Pages" scheme="https://cloudlxy.github.io/XiaoyuBlog/tags/github-pages/"/>
+    <content>
+      <![CDATA[<p>这是本站的第一篇文章。它同时也可以当作一份「备忘」：把 Hexo + Git + GitHub 建站的关键步骤记下来，<br>以后换电脑或者重建站点时照着做就行。</p><span id="more"></span><h2 id="整体思路"><a href="#整体思路" class="headerlink" title="整体思路"></a>整体思路</h2><p>一句话概括：<strong>Hexo 负责把 Markdown 变成静态网页，Git 负责记录改动，GitHub 负责托管和免费发布。</strong></p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">本地写 Markdown  →  hexo generate  →  public/ 静态文件  →  git push  →  GitHub Pages 上线</span><br></pre></td></tr></table></figure><p>为什么用静态博客：没有数据库、没有后端、不用服务器，访问速度快，而且 GitHub Pages 免费且自带 HTTPS。</p><h2 id="目录结构"><a href="#目录结构" class="headerlink" title="目录结构"></a>目录结构</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">blog/</span><br><span class="line">├── _config.yml            # 站点总配置（标题、网址、部署方式）</span><br><span class="line">├── _config.landscape.yml  # 主题配置</span><br><span class="line">├── scaffolds/             # 新建文章的模板</span><br><span class="line">├── source/</span><br><span class="line">│   ├── _posts/            # 你写的文章都放这里</span><br><span class="line">│   └── favicon.png        # 站点图标</span><br><span class="line">├── themes/                # 自定义主题（本站在用 npm 装的景观主题，所以这里是空的）</span><br><span class="line">└── package.json           # 依赖清单</span><br></pre></td></tr></table></figure><p>注意 <code>public/</code> 是生成出来的，<strong>不要手工修改</strong>，它在 <code>.gitignore</code> 里，不进版本库。</p><h2 id="日常写作流程"><a href="#日常写作流程" class="headerlink" title="日常写作流程"></a>日常写作流程</h2><p>新建一篇文章：</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npx hexo new post <span class="string">&quot;文章标题&quot;</span></span><br></pre></td></tr></table></figure><p>然后编辑 <code>source/_posts/文章标题.md</code>，写完本地预览：</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npx hexo server</span><br></pre></td></tr></table></figure><p>浏览器打开 <a href="http://localhost:4000/XiaoyuBlog/">http://localhost:4000/XiaoyuBlog/</a> 就能看到效果，按 <code>Ctrl+C</code> 停止。</p><p>发布上线：</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npx hexo clean &amp;&amp; npx hexo generate &amp;&amp; npx hexo deploy</span><br></pre></td></tr></table></figure><h2 id="两个容易踩的坑"><a href="#两个容易踩的坑" class="headerlink" title="两个容易踩的坑"></a>两个容易踩的坑</h2><p><strong>第一，项目站点的根路径。</strong> 本站地址是 <code>https://cloudlxy.github.io/XiaoyuBlog/</code>，<br>比用户站点多了一层 <code>/XiaoyuBlog</code>。所以 <code>_config.yml</code> 里必须同时设置：</p><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">url:</span> <span class="string">https://cloudlxy.github.io/XiaoyuBlog</span></span><br><span class="line"><span class="attr">root:</span> <span class="string">/XiaoyuBlog/</span></span><br></pre></td></tr></table></figure><p><code>root</code> 结尾的斜杠不能少，否则 CSS 和图片全部 404，页面会变成没有样式的纯文本。</p><p><strong>第二，文件名尽量用英文。</strong> 文章的文件名会进入永久链接。如果文件名叫 <code>你好世界.md</code>，<br>链接就会变成一长串 <code>%E4%BD%A0%E5%A5%BD...</code> 的转义字符。用 <code>hello-world.md</code> 这种英文名，<br>标题仍然可以写中文。</p><h2 id="接下来"><a href="#接下来" class="headerlink" title="接下来"></a>接下来</h2><ul><li>换一个更现代的主题，比如 Fluid、Butterfly、NexT</li><li>绑定自己的域名，并在 GitHub Pages 里开启 HTTPS</li><li>用 GitHub Actions 自动构建，这样连本地 <code>hexo deploy</code> 都省了</li></ul><p>路还长，慢慢写。</p>]]>
+    </content>
+    <id>https://cloudlxy.github.io/XiaoyuBlog/2026/10/08/hello-world/</id>
+    <link href="https://cloudlxy.github.io/XiaoyuBlog/2026/10/08/hello-world/"/>
+    <published>2026-10-08T09:43:40.000Z</published>
+    <summary>
+      <![CDATA[<p>这是本站的第一篇文章。它同时也可以当作一份「备忘」：把 Hexo + Git + GitHub 建站的关键步骤记下来，<br>以后换电脑或者重建站点时照着做就行。</p>]]>
+    </summary>
+    <title>你好，世界</title>
+    <updated>2026-10-08T09:43:46.381Z</updated>
+  </entry>
+</feed>
