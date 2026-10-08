@@ -12,10 +12,11 @@ language: zh-CN
 timezone: 'Asia/Shanghai'
 
 # URL
-## 部署到 https://github.com/Cloudlxy/XiaoyuBlog 的 GitHub Pages（项目站点）
-## 项目站点必须同时设置 url 和 root，root 必须带首尾斜杠！
-url: https://cloudlxy.github.io/XiaoyuBlog
-root: /XiaoyuBlog/
+## 部署到 https://github.com/Cloudlxy/Cloudlxy.github.io 的 GitHub Pages
+## 仓库名是 <用户名>.github.io，属于「用户站点」，直接发布在根路径下。
+## 所以 root 是 '/'，网址里不再有 /XiaoyuBlog 这一层。
+url: https://cloudlxy.github.io
+root: /
 permalink: :year/:month/:day/:title/
 permalink_defaults:
 pretty_urls:
@@ -84,7 +85,12 @@ per_page: 10
 pagination_dir: page
 
 # Include / Exclude file(s)
+# Hexo 默认会忽略以 . 开头的隐藏文件，必须显式 include，
+# 否则 source/.nojekyll 不会被复制到 public/。
+# .nojekyll 的作用：让 GitHub Pages 跳过 Jekyll 处理，
+# 避免文章里的 {{ }} / {% %} 被 Liquid 模板引擎误解析。
 include:
+  - .nojekyll
 exclude:
 ignore:
 
@@ -99,12 +105,12 @@ feed:
   content: true
   content_limit: 140
   order_by: -date
-  icon: https://cloudlxy.github.io/XiaoyuBlog/favicon.png
+  icon: https://cloudlxy.github.io/favicon.png
 
 # Deployment
 ## 生成结果（public/）会被强制推送到 gh-pages 分支，源码留在 main 分支
 deploy:
   type: git
-  repo: https://github.com/Cloudlxy/XiaoyuBlog.git
+  repo: https://github.com/Cloudlxy/Cloudlxy.github.io.git
   branch: gh-pages
   message: "Site updated: {{ now('yyyy-MM-dd HH:mm:ss') }}"

@@ -53,7 +53,7 @@ npx hexo new post "文章标题"
 npx hexo server
 ```
 
-浏览器打开 <http://localhost:4000/XiaoyuBlog/> 就能看到效果，按 `Ctrl+C` 停止。
+浏览器打开 <http://localhost:4000/> 就能看到效果，按 `Ctrl+C` 停止。
 
 发布上线：
 
@@ -63,15 +63,19 @@ npx hexo clean && npx hexo generate && npx hexo deploy
 
 ## 两个容易踩的坑
 
-**第一，项目站点的根路径。** 本站地址是 `https://cloudlxy.github.io/XiaoyuBlog/`，
-比用户站点多了一层 `/XiaoyuBlog`。所以 `_config.yml` 里必须同时设置：
+**第一，仓库名决定网址，而且必须叫 `<用户名>.github.io`。** 本站最初叫 `XiaoyuBlog`，
+属于「项目站点」，网址是 `https://cloudlxy.github.io/XiaoyuBlog/`，比根路径多一层。
+后来把仓库改名为 `Cloudlxy.github.io`，就变成了「用户站点」，网址直接是根路径：
 
 ```yaml
-url: https://cloudlxy.github.io/XiaoyuBlog
-root: /XiaoyuBlog/
+url: https://cloudlxy.github.io
+root: /
 ```
 
-`root` 结尾的斜杠不能少，否则 CSS 和图片全部 404，页面会变成没有样式的纯文本。
+改名之后 `root` 必须从 `/XiaoyuBlog/` 改回 `/`，否则所有 CSS 和图片都会 404，
+页面会变成没有样式的纯文本。这是项目站点和用户站点最容易搞混的一点。
+
+注意用户站点的仓库**一个账号只能有一个**，所以 `Cloudlxy.github.io` 这个名字不能再用在别处。
 
 **第二，文件名尽量用英文。** 文章的文件名会进入永久链接。如果文件名叫 `你好世界.md`，
 链接就会变成一长串 `%E4%BD%A0%E5%A5%BD...` 的转义字符。用 `hello-world.md` 这种英文名，

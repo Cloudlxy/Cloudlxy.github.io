@@ -1,10 +1,13 @@
-# XiaoyuBlog
+# 晓宇的博客
 
 用 **Hexo + Git + GitHub Pages** 搭建的个人博客。
 
-- 线上地址：<https://cloudlxy.github.io/XiaoyuBlog/>
-- 源码仓库：<https://github.com/Cloudlxy/XiaoyuBlog>
-- 本地预览：<http://localhost:4000/XiaoyuBlog/>
+- 线上地址：<https://cloudlxy.github.io/>
+- 源码仓库：<https://github.com/Cloudlxy/Cloudlxy.github.io>
+- 本地预览：<http://localhost:4000/>
+
+> 仓库名叫 `Cloudlxy.github.io`（即 `<用户名>.github.io`），属于 GitHub Pages 的**用户站点**，
+> 所以网址是**根路径**，没有 `/仓库名` 这一层。
 
 ## 它是怎么工作的
 
@@ -32,7 +35,7 @@ npm install          # 首次安装依赖
 npx hexo server      # 启动本地预览
 ```
 
-打开 <http://localhost:4000/XiaoyuBlog/>，`Ctrl+C` 停止。
+打开 <http://localhost:4000/>，`Ctrl+C` 停止。
 
 `npx hexo server` 会监听文件变化并自动重新生成，改完 Markdown 刷新浏览器即可。
 
@@ -62,7 +65,7 @@ npm run publish      # 等于 hexo clean && hexo generate && hexo deploy
 `hexo deploy` 会推 `gh-pages` 分支，但 `main` 分支的源码需要你手动推一次：
 
 ```bash
-git remote add origin https://github.com/Cloudlxy/XiaoyuBlog.git   # 已配置
+git remote add origin https://github.com/Cloudlxy/Cloudlxy.github.io.git   # 已配置
 git push -u origin main
 ```
 
@@ -85,7 +88,9 @@ GitHub 授权，之后凭据会被记住，不用反复登录。
 **Settings → Pages → Source** 选择 `Deploy from a branch`，
 分支选 **`gh-pages`**，目录选 **`/ (root)`**，保存。
 
-等一两分钟，访问 <https://cloudlxy.github.io/XiaoyuBlog/> 即可。
+等一两分钟，访问 <https://cloudlxy.github.io/> 即可。
+
+用户站点的仓库**一个账号只能有一个**，`Cloudlxy.github.io` 这个名字不能再给别的仓库用。
 
 ## 本机踩过的坑
 
@@ -103,18 +108,25 @@ git config --global http.sslBackend openssl
 
 本仓库已在 `.git/config` 里配置了同样的设置，所以在这个目录里 `git push` 是可以的。
 
-### 2. 项目站点的根路径必须配对
+### 2. `url` / `root` 必须和仓库类型配对
 
-本站属于 **Project Pages**，网址比用户站点多一层 `/XiaoyuBlog`，
-所以 `_config.yml` 里必须同时写 `url` 和 `root`：
+GitHub Pages 分两种，**网址形状完全不同**，`_config.yml` 必须跟着改：
+
+| 仓库名 | 类型 | 网址 | `url` / `root` |
+| --- | --- | --- | --- |
+| `Cloudlxy.github.io` | 用户站点 | `https://cloudlxy.github.io/` | `https://cloudlxy.github.io` / `/` |
+| 其他任意名字（如 `XiaoyuBlog`） | 项目站点 | `https://cloudlxy.github.io/XiaoyuBlog/` | `https://cloudlxy.github.io/XiaoyuBlog` / `/XiaoyuBlog/` |
+
+本站原本叫 `XiaoyuBlog`（项目站点），后来改名为 `Cloudlxy.github.io` 换成根地址，
+所以现在是：
 
 ```yaml
-url: https://cloudlxy.github.io/XiaoyuBlog
-root: /XiaoyuBlog/
+url: https://cloudlxy.github.io
+root: /
 ```
 
-`root` 的首尾斜杠都不能少。写错的表现是：页面能打开但**完全没有样式**，
-因为 CSS 和图片都 404 了。用 `hexo server` 本地预览时也要带上 `/XiaoyuBlog/` 这一层。
+**改仓库名时一定要同步改这两行。** 写错的表现是页面能打开但**完全没有样式**，
+因为 CSS 和图片全部 404 —— 它们还指向旧的 `/XiaoyuBlog/` 路径。
 
 ### 3. 中文分类/标签会产生转义网址
 
