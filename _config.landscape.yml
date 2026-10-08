@@ -1,0 +1,55 @@
+# landscape 主题配置
+# Hexo 5+ 支持用 _config.<主题名>.yml 覆盖主题自带配置，
+# 这样升级主题时你的自定义不会被覆盖。
+# 完整可选项见 node_modules/hexo-theme-landscape/_config.yml
+
+# ===============
+# 顶部导航（键就是显示的文字）
+# ===============
+menu:
+  首页: /
+  归档: /archives
+  标签: /tags
+  分类: /categories
+
+# RSS 订阅（由 hexo-generator-feed 生成 atom.xml）
+rss: /atom.xml
+
+# 首页大图下方的小标题
+subtitle: 记录、思考与成长
+
+# 右上角图标链接（名称需对应 Fork Awesome 图标名）
+links:
+  github: https://github.com/Cloudlxy
+
+# ===============
+# 内容
+# ===============
+excerpt_link: 阅读全文
+fancybox: true
+
+# ===============
+# 页脚
+# ===============
+copyright: '© 2026 Cloudlxy · 本博客文章采用 CC BY-NC-SA 4.0 许可协议'
+
+# ===============
+# 侧边栏
+# ===============
+sidebar: right
+widgets:
+  - category
+  - tag
+  - tagcloud
+  - archive
+  - recent_posts
+
+archive_type: monthly
+show_count: true
+recent_posts_limits: 5
+
+# ===============
+# 杂项
+# ===============
+# 站点图标：对应 source/favicon.png，会输出到 /XiaoyuBlog/favicon.png
+favicon: /favicon.png

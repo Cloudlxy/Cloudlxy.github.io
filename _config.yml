@@ -1,0 +1,110 @@
+# Hexo Configuration
+## Docs: https://hexo.io/docs/configuration.html
+## Source: https://github.com/hexojs/hexo/
+
+# Site
+title: 晓宇的博客
+subtitle: '记录、思考与成长'
+description: '一个用 Hexo 搭建的个人博客，记录技术笔记与生活随笔。'
+keywords: 'Hexo, 博客, 前端, 笔记'
+author: Cloudlxy
+language: zh-CN
+timezone: 'Asia/Shanghai'
+
+# URL
+## 部署到 https://github.com/Cloudlxy/XiaoyuBlog 的 GitHub Pages（项目站点）
+## 项目站点必须同时设置 url 和 root，root 必须带首尾斜杠！
+url: https://cloudlxy.github.io/XiaoyuBlog
+root: /XiaoyuBlog/
+permalink: :year/:month/:day/:title/
+permalink_defaults:
+pretty_urls:
+  trailing_index: true # 去掉永久链接末尾多余的 'index.html'
+  trailing_html: true # 去掉永久链接末尾多余的 '.html'
+
+# Directory
+source_dir: source
+public_dir: public
+tag_dir: tags
+archive_dir: archives
+category_dir: categories
+code_dir: downloads/code
+i18n_dir: :lang
+skip_render:
+
+# Writing
+new_post_name: :title.md # 新文章的文件名。建议用英文，中文文件名会变成 %E4%B8%AD 这样的转义链接
+default_layout: post
+titlecase: false # 标题是否转为 Title Case
+external_link:
+  enable: true # 外部链接在新标签页打开
+  field: site # 作用于整站
+  exclude: ''
+filename_case: 0
+render_drafts: false
+post_asset_folder: false
+relative_link: false
+future: true
+syntax_highlighter: highlight.js
+highlight:
+  line_number: true
+  auto_detect: false
+  tab_replace: ''
+  wrap: true
+  hljs: false
+prismjs:
+  preprocess: true
+  line_number: true
+  tab_replace: ''
+
+# Home page setting
+index_generator:
+  path: ''
+  per_page: 10
+  order_by: -date
+
+# Category & Tag
+default_category: uncategorized
+# 把中文分类映射成英文链接，避免出现 /categories/%E6%8A%98%E8%85%BE... 这种转义网址
+category_map:
+  折腾记录: notes
+tag_map:
+  GitHub Pages: github-pages
+
+# Metadata elements
+meta_generator: true
+
+# Date / Time format
+date_format: YYYY-MM-DD
+time_format: HH:mm:ss
+updated_option: 'mtime'
+
+# Pagination
+per_page: 10
+pagination_dir: page
+
+# Include / Exclude file(s)
+include:
+exclude:
+ignore:
+
+# Extensions
+theme: landscape
+
+# RSS / Atom 订阅（hexo-generator-feed）
+feed:
+  type: atom
+  path: atom.xml
+  limit: 20
+  content: true
+  content_limit: 140
+  order_by: -date
+  icon: https://cloudlxy.github.io/XiaoyuBlog/favicon.png
+
+# Deployment
+## 生成结果（public/）会被强制推送到 gh-pages 分支，源码留在 main 分支
+deploy:
+  type: git
+  repo: https://github.com/Cloudlxy/XiaoyuBlog.git
+  branch: gh-pages
+  message: "Site updated: {{ now('YYYY-MM-DD HH:mm:ss') }}"
