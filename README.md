@@ -1,4 +1,4 @@
-# 晓宇的博客
+# xiaoyu's blog
 
 用 **Hexo + Git + GitHub Pages** 搭建的个人博客。
 
@@ -152,58 +152,73 @@ npm install --cache ./.npm-cache --ignore-scripts
 
 ### 5. 主题配置只能「加」不能「删」（deepMerge）
 
-`_config.landscape.yml` 不是替换主题自带配置，而是**深合并**进去。Hexo 源码里就是这一行：
+`_config.<主题名>.yml` 不是替换主题自带配置，而是**深合并**进去。Hexo 源码里就是这一行：
 
 ```js
 ctx.theme.config = deepMerge(ctx.theme.config, ctx.config.theme_config)
 ```
 
-深合并只能新增键、或覆盖同名键的值，**删不掉键**。而 landscape 主题自带的 `_config.yml`
-里写死了 `Home` / `Archives` 两个菜单项，所以我们定义中文菜单后，导航会变成
-`Home / Archives / 首页 / 归档 / 标签 / 分类` 六项、两组重复。
+深合并只能新增键、或覆盖同名键的值，**删不掉键**。这个坑真的踩过一次：landscape 主题的
+`_config.yml` 里写死了 `Home` / `Archives` 两个菜单项，我们定义中文菜单后，导航变成
+`Home / Archives / 首页 / 归档 / 标签 / 分类` 六项、两组重复。当时的解法是加一个
+`scripts/theme-menu.js`，在生成前 `delete hexo.theme.config.menu.Home`。
 
-`scripts/theme-menu.js` 就是用来擦掉这两个英文键的：
+**换成 Butterfly 后这个问题自动消失**，因为 Butterfly 默认的 `menu:` 是空的（整段注释掉），
+写什么就显示什么，所以那个脚本已经删掉了。但以后如果换到**默认菜单非空**的主题，
+重复还会再出现，届时有两条路：
 
-```js
-hexo.extend.filter.register('before_generate', () => {
-  delete hexo.theme.config.menu.Home;
-  delete hexo.theme.config.menu.Archives;
-});
+- 写个 `scripts/` 脚本把多余的键删掉 —— `scripts/` 是 Hexo 官方扩展点，启动时自动加载，
+  而且不会被 `npm install` 覆盖
+- 或者把主题从 `node_modules` 复制到 `themes/<名字>/`，直接改它自己的 `_config.yml`
+
+### 6. 「标签」「分类」页必须手动创建
+
+Hexo **不会**自动生成 `/tags/` 和 `/categories/` 这两个索引页（它只生成 `tags/<标签名>/`
+这类具体页面）。所以导航里如果写了这两个链接，不手动建页面就是 **404** —— 本站就曾经因此
+挂过两个死链，而且因为只测了 `/categories/notes/` 这种具体分类页，一直没发现。
+
+建法是创建带 `type` 的页面：
+
+```bash
+npx hexo new page tags
 ```
 
-`scripts/` 是 Hexo 的官方扩展点，会在启动时自动加载，不会被 `npm install` 覆盖。
-以后如果发现主题里**别的**配置项也是「只能改值、不能删项」（比如 `widgets`、`links`），
-可以在同一个文件里用同样办法处理。换了主题之后这个文件可以直接删。
+然后把 `source/tags/index.md` 的 front-matter 补上 `type: tags`（分类页则是 `type: categories`）。
+主题会依据这个 `type` 渲染出「全部标签 / 全部分类」列表。
 
 ## 换主题
 
-以 Fluid 为例：
+当前用的是 **Butterfly 5.7.0**，配置在 `_config.butterfly.yml`。做法是把主题自带的
+`node_modules/hexo-theme-butterfly/_config.yml` 整个复制到根目录再改 —— 这样所有可选项
+都带注释摆在手边，而且键名和主题默认配置完全一致，深合并不会出意外。
+
+想换别的主题，以 Fluid 为例：
 
 ```bash
 npm install hexo-theme-fluid --save
 ```
 
-然后改 `_config.yml`：
+然后改 `_config.yml` 里的 `theme: fluid`，再新建 `_config.fluid.yml`。别忘了清理上一个主题
+专属的文件（比如 `_config.butterfly.yml`），并按新主题的文档补装它需要的渲染器或插件。
 
-```yaml
-theme: fluid
-```
-
-主题配置写在 `_config.fluid.yml`（主题自己的配置文件在 `node_modules` 里，
-不要直接改，升级会丢）。其他常用主题：Butterfly、NexT、Volantis。
+几个主题的现状（2026-10 查证）：**Fluid / Butterfly / NexT / Keep 都在活跃维护**；
+**Volantis 6.8.3 要求 Hexo ^8.1.1**（本项目是 7.3，装它会把 Hexo 一起升到大版本，不建议）；
+**Stellar 依赖 `sharp` 原生模块**，在受限环境里装容易失败。
 
 ## 目录速查
 
 ```
-├── _config.yml            # 站点总配置（网址、根路径、部署）★改这里
-├── _config.landscape.yml  # 当前主题配置（会被深合并进主题默认配置）
-├── scripts/               # Hexo 扩展脚本（theme-menu.js 修正导航重复）
-├── scaffolds/             # 新建文章的模板（post / page / draft）
+├── _config.yml             # 站点总配置（标题、网址、根路径、部署）★改这里
+├── _config.butterfly.yml   # 主题配置（从主题自带配置复制而来）
+├── scaffolds/              # 新建文章的模板（post / page / draft）
 ├── source/
-│   ├── _posts/            # 文章★写这里
-│   ├── favicon.png        # 站点图标
-│   └── .nojekyll          # 让 GitHub Pages 跳过 Jekyll，必须配合 ignore_hidden: false
-├── public/                # 生成结果（已 gitignore，勿手改）
+│   ├── _posts/             # 文章★写这里
+│   ├── tags/index.md       # 「标签」页，靠 type: tags 渲染
+│   ├── categories/index.md # 「分类」页，靠 type: categories 渲染
+│   ├── favicon.png         # 站点图标（浏览器标签页那个）
+│   ├── img/banner.jpg      # 首页背景图
+│   └── .nojekyll           # 让 GitHub Pages 跳过 Jekyll，需配合 ignore_hidden: false
+├── public/                 # 生成结果（已 gitignore，勿手改）
 └── package.json
 ```
 
@@ -211,5 +226,5 @@ theme: fluid
 
 - 用 GitHub Actions 自动构建，push 源码即自动发布，连 `hexo deploy` 都省了
 - 绑定自定义域名并在 Pages 里开启 HTTPS
-- 接入评论系统（Valine / Giscus）和统计（Google Analytics / 百度统计）
-- 换一个更适合中文阅读的主题
+- 接入评论系统（Twikoo / Giscus / Valine）和统计
+- 把图片 CDN 本地化：`npm install hexo-butterfly-extjs`，再把 `third_party_provider` 改成 `local`
