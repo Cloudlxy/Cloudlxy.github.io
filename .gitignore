@@ -17,3 +17,6 @@ _multiconfig.yml
 
 # 视频画质对比的分析产物
 sharp/
+
+# 高 DPI 画质试验的产物
+hi/
