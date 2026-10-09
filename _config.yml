@@ -95,7 +95,8 @@ exclude:
 ignore:
 
 # Extensions
-theme: landscape
+## 当前主题。它的配置写在 _config.butterfly.yml（由主题自带的 _config.yml 复制而来）
+theme: butterfly
 
 # RSS / Atom 订阅（hexo-generator-feed）
 feed:
