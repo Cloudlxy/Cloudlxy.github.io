@@ -312,8 +312,10 @@ aside:
       # 主题默认是 https://github.com/xxxxxx 这种占位地址，点了是死链，换成真的
       link: https://github.com/Cloudlxy
   card_announcement:
-    enable: true
-    # 主题默认写的是英文占位句 "This is my Blog"，改成自己的话
+    # 关掉：侧边栏不再显示「公告」这张卡。
+    # 以后想恢复就把 enable 改成 true —— 下面这行文案还留着，不用重写
+    # （原来是主题默认的英文占位句 "This is my Blog"）。
+    enable: false
     content: 本站用 Hexo + Butterfly 搭建，主要记录折腾过程中的踩坑与解决。
   card_recent_post:
     enable: true
