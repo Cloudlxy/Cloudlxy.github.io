@@ -276,8 +276,10 @@ footer:
     enable: true
     since: 2025
   # Copyright of theme and framework
+  # 关掉这一项，页脚就不再显示「框架 Hexo x.y.z | 主题 Butterfly x.y.z」这行。
+  # 模板位置：node_modules/hexo-theme-butterfly/layout/includes/footer.pug:28-37
   copyright:
-    enable: true
+    enable: false
     version: true
   custom_text:
 
