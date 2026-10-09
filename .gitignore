@@ -14,3 +14,6 @@ _multiconfig.yml
 # 视频压制过程中的临时产物（候选文件、抽帧图），不要进仓库
 .video-out/
 .frames/
+
+# ��Ƶ���ʶԱȵķ�������
+sharp/
