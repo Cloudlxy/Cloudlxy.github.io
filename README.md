@@ -215,8 +215,11 @@ npm install hexo-theme-fluid --save
 │   ├── _posts/             # 文章★写这里
 │   ├── tags/index.md       # 「标签」页，靠 type: tags 渲染
 │   ├── categories/index.md # 「分类」页，靠 type: categories 渲染
-│   ├── favicon.png         # 站点图标（浏览器标签页那个）
-│   ├── img/banner.jpg      # 首页背景图
+│   ├── favicon.png         # 站点图标（浏览器标签页那个，从桌面的 head.jpg 裁出来的）
+│   ├── img/avatar.jpg      # 侧边栏头像
+│   ├── img/bg-poster.jpg   # 首页视频的封面帧（视频没加载时显示这一张）
+│   ├── img/page-bg.jpg     # 内页背景图（文章/归档/标签/分类的顶部大图）
+│   ├── video/bg-loop.mp4   # 首页 banner 的背景视频（往返拼接，无缝循环）
 │   └── .nojekyll           # 让 GitHub Pages 跳过 Jekyll，需配合 ignore_hidden: false
 ├── public/                 # 生成结果（已 gitignore，勿手改）
 └── package.json

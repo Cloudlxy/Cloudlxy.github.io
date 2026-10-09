@@ -70,9 +70,11 @@ avatar:
 disable_top_img: false
 
 # If the banner of page not setting, it will show the default_top_img
-# 站点背景图（所有没有单独指定图片的页面都用它）。
-# 图片放在 source/img/banner.jpg，生成后会输出到 /img/banner.jpg
-default_top_img: /img/banner.jpg
+# 内页背景图（文章 / 归档 / 标签 / 分类，凡是没单独指定图片的页面都用它）。
+# 取自首页视频的第一帧：裁成 banner 的宽幅比例、底部做了渐变压暗，
+# 所以标题所在的下半部分偏深，白字压得住；上半部分保留明亮的水面和猫。
+# 图片放在 source/img/page-bg.jpg，生成后输出到 /img/page-bg.jpg
+default_top_img: /img/page-bg.jpg
 
 # The banner image of index page
 # 首页的静态兜底图 = 视频的第一帧（见 inject 里的视频背景）。
@@ -301,15 +303,18 @@ aside:
     category: true
   card_author:
     enable: true
-    description:
+    # 作者卡里的一句话简介（留空的话这张卡只有头像和按钮，会显得很空）
+    description: 随便写点东西，顺便记录踩过的坑。
     button:
       enable: true
       icon: fab fa-github
-      text: Follow Me
-      link: https://github.com/xxxxxx
+      text: GitHub
+      # 主题默认是 https://github.com/xxxxxx 这种占位地址，点了是死链，换成真的
+      link: https://github.com/Cloudlxy
   card_announcement:
     enable: true
-    content: This is my Blog
+    # 主题默认写的是英文占位句 "This is my Blog"，改成自己的话
+    content: 本站用 Hexo + Butterfly 搭建，主要记录折腾过程中的踩坑与解决。
   card_recent_post:
     enable: true
     # If set 0 will show all
@@ -1105,13 +1110,19 @@ inject:
       }
       /* 首页去掉主题那层 30% 黑遮罩：实测白字标题不加遮罩也读得清，
          去掉后画面更通透，不会发灰发闷。
-         只在首页（.full_page）生效，内页的渐变背景保持主题默认不动。
+         只在首页（.full_page）生效，内页仍保留主题自带的遮罩。
          可读性改用只作用于文字的阴影来保，不压平整张画面。 */
       #page-header.full_page:before {
         background-color: transparent !important;
       }
       #page-header.full_page #site-title,
       #page-header.full_page #site-subtitle {
+        text-shadow: 0 2px 10px rgba(0, 0, 0, .55), 0 1px 3px rgba(0, 0, 0, .5);
+      }
+      /* 内页（文章 / 归档 / 标签 / 分类）的标题和元信息也垫同样一层细阴影：
+         背景图底部已经压暗过，但元信息那行字又小又细，多一层更稳。 */
+      #page-header #post-info .post-title,
+      #page-header #post-info #post-meta {
         text-shadow: 0 2px 10px rgba(0, 0, 0, .55), 0 1px 3px rgba(0, 0, 0, .5);
       }
       </style>
