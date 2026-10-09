@@ -1,0 +1,472 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Dify 部署踩坑：Docker 网段冲突导致校外无法访问 | xiaoyu's blog</title><meta name="author" content="Cloudlxy"><meta name="copyright" content="Cloudlxy"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="一台校园网里的服务器，Dify 用 Docker Compose 部署。这篇记录的是两个前后相连的故障：  校外完全访问不了 —— Docker 自动分配的虚拟网段和校园网段撞车，把校外流量的路由「劫持」到了 Docker 网桥上。 按建议改完地址池、删掉冲突路由之后，校外依然访问不了 —— 因为旧的 Compose 网络没有重建，容器还在用那个已经被删掉路由的旧网段，回包被丢弃。  第一个问题解">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Dify 部署踩坑：Docker 网段冲突导致校外无法访问">
+<meta property="og:url" content="https://cloudlxy.github.io/2026/05/11/dify-docker-network-conflict/index.html">
+<meta property="og:site_name" content="xiaoyu&#39;s blog">
+<meta property="og:description" content="一台校园网里的服务器，Dify 用 Docker Compose 部署。这篇记录的是两个前后相连的故障：  校外完全访问不了 —— Docker 自动分配的虚拟网段和校园网段撞车，把校外流量的路由「劫持」到了 Docker 网桥上。 按建议改完地址池、删掉冲突路由之后，校外依然访问不了 —— 因为旧的 Compose 网络没有重建，容器还在用那个已经被删掉路由的旧网段，回包被丢弃。  第一个问题解">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cloudlxy.github.io/img/avatar.jpg">
+<meta property="article:published_time" content="2026-05-11T10:06:37.000Z">
+<meta property="article:modified_time" content="2026-10-09T07:49:58.792Z">
+<meta property="article:author" content="Cloudlxy">
+<meta property="article:tag" content="Docker">
+<meta property="article:tag" content="Dify">
+<meta property="article:tag" content="网络排查">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cloudlxy.github.io/img/avatar.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Dify 部署踩坑：Docker 网段冲突导致校外无法访问",
+  "url": "https://cloudlxy.github.io/2026/05/11/dify-docker-network-conflict/",
+  "image": "https://cloudlxy.github.io/img/avatar.jpg",
+  "datePublished": "2026-05-11T10:06:37.000Z",
+  "dateModified": "2026-10-09T07:49:58.792Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Cloudlxy",
+      "url": "https://cloudlxy.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/favicon.png"><link rel="canonical" href="https://cloudlxy.github.io/2026/05/11/dify-docker-network-conflict/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.json","preload":false,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Dify 部署踩坑：Docker 网段冲突导致校外无法访问',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><style>
+/* ===== 首页 banner 视频背景 ===== */
+/* 视频铺满整个 header，盖在静态背景图（index_img）之上 */
+#page-header #bg-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  pointer-events: none;
+}
+/* 主题自带的暗遮罩必须排在视频之上，
+   否则白色标题压在明亮的青绿水面上会看不清。
+   主题没给 :before 声明过 z-index，所以这里只补 z-index，不冲突。 */
+#page-header:before { z-index: 1; }
+/* 标题和下滑箭头要浮在暗遮罩之上。
+   注意：这里只加 z-index，绝不写 position ——
+   主题已把它们设成 absolute（#site-info 还有 top: 65%），
+   用更高优先级覆盖 position 会把标题顶出画面。
+   #nav 不用管：主题自带 z-index: 90，本来就压在最上面。 */
+#page-header #site-info,
+#page-header #scroll-down {
+  z-index: 2;
+}
+/* 首页去掉主题那层 30% 黑遮罩：实测白字标题不加遮罩也读得清，
+   去掉后画面更通透，不会发灰发闷。
+   只在首页（.full_page）生效，内页仍保留主题自带的遮罩。
+   可读性改用只作用于文字的阴影来保，不压平整张画面。 */
+#page-header.full_page:before {
+  background-color: transparent !important;
+}
+#page-header.full_page #site-title,
+#page-header.full_page #site-subtitle {
+  text-shadow: 0 2px 10px rgba(0, 0, 0, .55), 0 1px 3px rgba(0, 0, 0, .5);
+}
+/* 内页（文章 / 归档 / 标签 / 分类）的标题和元信息也垫同样一层细阴影：
+   背景图底部已经压暗过，但元信息那行字又小又细，多一层更稳。 */
+#page-header #post-info .post-title,
+#page-header #post-info #post-meta {
+  text-shadow: 0 2px 10px rgba(0, 0, 0, .55), 0 1px 3px rgba(0, 0, 0, .5);
+}
+</style>
+<meta name="generator" content="Hexo 7.3.0"><link rel="alternate" href="/atom.xml" title="xiaoyu's blog" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">1</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">3</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(/img/page-bg.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">xiaoyu's blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Dify 部署踩坑：Docker 网段冲突导致校外无法访问</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Dify 部署踩坑：Docker 网段冲突导致校外无法访问</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-05-11T10:06:37.000Z" title="发表于 2026-05-11 18:06:37">2026-05-11</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-10-09T07:49:58.792Z" title="更新于 2026-10-09 15:49:58">2026-10-09</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/notes/">折腾记录</a></span></div><div class="meta-secondline"></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>一台校园网里的服务器，Dify 用 Docker Compose 部署。这篇记录的是两个前后相连的故障：</p>
+<ol>
+<li><strong>校外完全访问不了</strong> —— Docker 自动分配的虚拟网段和校园网段撞车，把校外流量的路由「劫持」到了 Docker 网桥上。</li>
+<li><strong>按建议改完地址池、删掉冲突路由之后，校外依然访问不了</strong> —— 因为旧的 Compose 网络没有重建，容器还在用那个已经被删掉路由的旧网段，回包被丢弃。</li>
+</ol>
+<p>第一个问题解决的是「路由」，第二个问题解决的是「网络」。<strong>只删路由、不重建网络，等于没修完</strong> —— 这是整件事最值得记下来的一点。</p>
+<span id="more"></span>
+
+<h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><table>
+<thead>
+<tr>
+<th>项目</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>服务器 IP</td>
+<td><code>172.30.38.36</code></td>
+</tr>
+<tr>
+<td>校园网段</td>
+<td><code>172.30.38.0/24</code>，网关 <code>172.30.38.1</code></td>
+</tr>
+<tr>
+<td>网卡</td>
+<td><code>ens7</code></td>
+</tr>
+<tr>
+<td>Dify 部署方式</td>
+<td>Docker Compose，源码路径 <code>/workspace/dify/docker</code></td>
+</tr>
+<tr>
+<td>Dify 版本</td>
+<td><code>langgenius/dify-api:1.13.3</code></td>
+</tr>
+<tr>
+<td>Nginx</td>
+<td><code>nginx:1.29.8</code>（跑在容器里）</td>
+</tr>
+</tbody></table>
+<h2 id="问题一：校外访问不了，是-Docker-劫持了路由"><a href="#问题一：校外访问不了，是-Docker-劫持了路由" class="headerlink" title="问题一：校外访问不了，是 Docker 劫持了路由"></a>问题一：校外访问不了，是 Docker 劫持了路由</h2><h3 id="现象"><a href="#现象" class="headerlink" title="现象"></a>现象</h3><p><code>ip route</code> 里冒出了两条本不该存在的路由：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ip route</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">default via 172.30.38.1 dev ens7 proto static metric 100</span><br><span class="line">172.18.0.0/16 dev br-c2d97689e6f0 proto kernel scope link src 172.18.0.1</span><br><span class="line">172.28.0.0/16 dev br-3603dc913a0f proto kernel scope link src 172.28.0.1</span><br><span class="line">172.30.38.0/24 dev ens7 proto kernel scope link src 172.30.38.36 metric 100</span><br><span class="line">192.168.0.0/24 dev docker0 proto kernel scope link src 192.168.0.1 linkdown</span><br><span class="line">192.168.122.0/24 dev virbr0 proto kernel scope link src 192.168.122.1 linkdown</span><br></pre></td></tr></table></figure>
+
+<p>症状很有迷惑性：<strong>校内访问完全正常，只有校外访问黑屏、连不上。</strong></p>
+<h3 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h3><ul>
+<li>校内访问 <code>172.30.38.36</code> 走的是<strong>直连网段，不经过网关</strong>，所以毫发无伤。</li>
+<li>校外访问必须经过默认网关 <code>172.30.38.1</code>。</li>
+<li>而 <code>172.18.0.0/16</code>、<code>172.28.0.0/16</code> 和校园网段 <code>172.30.38.0/24</code> 同属 <code>172.16.0.0/12</code> 这个大段。<strong>路由匹配时掩码更长（更具体）的条目优先级更高</strong>，于是去往 <code>172.30.x</code> 的校外回包被强行引向 Docker 网桥 —— 网桥上当然没有对应目标，流量直接丢包。</li>
+</ul>
+<p>这两个网段是哪来的？Docker 创建自定义桥接网络（<code>br-xxx</code> 这种名字）时，默认从 <code>172.16.0.0/12</code> 里分配子网。<strong>反复 <code>docker compose down/up -d</code> 重启 Dify，每次都新建网络，就攒出了好几个撞车的网段。</strong></p>
+<blockquote>
+<p>用 <code>docker network ls</code> 可以验证这些 <code>br-xxx</code> 网桥确实归属 Docker 的自定义网络。</p>
+</blockquote>
+<h3 id="处理"><a href="#处理" class="headerlink" title="处理"></a>处理</h3><p><strong>第一步：临时恢复校外访问</strong> —— 关掉冲突的两个网桥：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ip <span class="built_in">link</span> <span class="built_in">set</span> br-c2d97689e6f0 down</span><br><span class="line">ip <span class="built_in">link</span> <span class="built_in">set</span> br-3603dc913a0f down</span><br></pre></td></tr></table></figure>
+
+<p>这一步能让校外访问立刻恢复，但<strong>只是止血</strong>：网桥关了，系统里的冲突路由条目还在。</p>
+<p><strong>第二步：删掉残留的冲突路由</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ip route del 172.18.0.0/16</span><br><span class="line">ip route del 172.28.0.0/16</span><br></pre></td></tr></table></figure>
+
+<p>再执行一次 <code>ip route</code>，确认 <code>172.18</code>、<code>172.28</code> 两条已经消失。</p>
+<p><strong>第三步：永久根治</strong> —— 按学校要求改 Docker 默认地址池，改用 <code>192.168</code> 网段，同时保留镜像加速配置：</p>
+<p><code>vi /etc/docker/daemon.json</code></p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;registry-mirrors&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">    <span class="string">&quot;https://docker.1ms.run&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="string">&quot;https://pypi.tuna.tsinghua.edu.cn/simple&quot;</span></span><br><span class="line">  <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;default-address-pools&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">    <span class="punctuation">&#123;</span> <span class="attr">&quot;base&quot;</span><span class="punctuation">:</span> <span class="string">&quot;192.168.100.0/16&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;size&quot;</span><span class="punctuation">:</span> <span class="number">24</span> <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl restart docker</span><br></pre></td></tr></table></figure>
+
+<p><strong>第四步：清理无用的 Docker 网络</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker network prune -f</span><br></pre></td></tr></table></figure>
+
+<p><strong>第五步：重启 Dify</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /workspace/dify/docker</span><br><span class="line">docker compose up -d</span><br></pre></td></tr></table></figure>
+
+<h3 id="验证"><a href="#验证" class="headerlink" title="验证"></a>验证</h3><p><code>ip route</code> 里不再有 <code>172.18</code>、<code>172.28</code> 网段，校外访问 Dify 恢复正常，反复重启容器也不再出问题。Docker 之后新建网络会从 <code>192.168.100.0/16</code> 里分配，和校园网的 <code>172.30.38.0/24</code> 彻底隔离。</p>
+<h2 id="问题二：改完之后，依然访问不了"><a href="#问题二：改完之后，依然访问不了" class="headerlink" title="问题二：改完之后，依然访问不了"></a>问题二：改完之后，依然访问不了</h2><p>改完地址池、删完路由，本以为收工了。结果 <code>http://172.30.38.36/</code> 还是打不开。</p>
+<h3 id="现象-1"><a href="#现象-1" class="headerlink" title="现象"></a>现象</h3><p><code>curl</code> 第一次长时间卡住，再来一次直接连接重置：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -v http://172.30.38.36/</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">*   Trying 172.30.38.36...</span><br><span class="line">* TCP_NODELAY set</span><br><span class="line">* Connected to 172.30.38.36 (172.30.38.36) port 80 (#0)</span><br><span class="line">&gt; GET / HTTP/1.1</span><br><span class="line">&gt; Host: 172.30.38.36</span><br><span class="line">&gt; User-Agent: curl/7.61.1</span><br><span class="line">&gt; Accept: */*</span><br><span class="line">&gt;</span><br><span class="line">(长时间无响应，手动中断)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">* Recv failure: 连接被对方重设</span><br><span class="line">* Closing connection 0</span><br><span class="line">curl: (56) Recv failure: 连接被对方重设</span><br></pre></td></tr></table></figure>
+
+<p><strong>注意 <code>Connected ... port 80</code> 这一行是成功的。</strong> TCP 握手通了，说明不是防火墙、也不是端口没监听，而是 Nginx 拿不到后端的正常响应。</p>
+<h3 id="排查"><a href="#排查" class="headerlink" title="排查"></a>排查</h3><p><strong>1. 容器和端口都正常</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker ps -a --format <span class="string">&quot;table &#123;&#123;.Names&#125;&#125;\t&#123;&#123;.Status&#125;&#125;\t&#123;&#123;.Ports&#125;&#125;&quot;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">NAMES                       STATUS                     PORTS</span><br><span class="line">docker-nginx-1              Up 8 minutes               0.0.0.0:80-&gt;80/tcp, :::80-&gt;80/tcp, 0.0.0.0:443-&gt;443/tcp, :::443-&gt;443/tcp</span><br><span class="line">docker-api-1                Up 8 minutes               5001/tcp</span><br><span class="line">docker-worker_beat-1        Up 8 minutes               5001/tcp</span><br><span class="line">docker-worker-1             Up 8 minutes               5001/tcp</span><br><span class="line">docker-unstructured-1       Up 8 minutes               8000/tcp</span><br><span class="line">docker-web-1                Up 8 minutes               3000/tcp</span><br><span class="line">docker-sandbox-1            Up 8 minutes (healthy)</span><br><span class="line">docker-plugin_daemon-1      Up 8 minutes               0.0.0.0:5003-&gt;5003/tcp, :::5003-&gt;5003/tcp</span><br><span class="line">docker-redis-1              Up 8 minutes (healthy)     6379/tcp</span><br><span class="line">docker-ssrf_proxy-1         Up 8 minutes               3128/tcp</span><br><span class="line">docker-weaviate-1           Up 12 minutes</span><br><span class="line">docker-db_postgres-1        Up 12 minutes (healthy)    5432/tcp</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ss -tlnp | grep <span class="string">&#x27;:80 &#x27;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">LISTEN 0      4096         0.0.0.0:80        0.0.0.0:*    users:((&quot;docker-proxy&quot;,pid=3819941,fd=4))</span><br><span class="line">LISTEN 0      4096            [::]:80           [::]:*    users:((&quot;docker-proxy&quot;,pid=3819949,fd=4))</span><br></pre></td></tr></table></figure>
+
+<p>容器都在跑，宿主机 80 端口由 <code>docker-proxy</code> 正常监听。</p>
+<p><strong>2. Nginx 日志干净</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker logs docker-nginx-1 --<span class="built_in">tail</span> 100</span><br></pre></td></tr></table></figure>
+
+<p>只有正常的启动 notice（<code>nginx/1.29.8</code>、<code>using the &quot;epoll&quot; event method</code>、<code>start worker processes</code>），<strong>没有任何 error</strong>。Nginx 进程是好的，那问题大概率出在「代理到后端」这一段。</p>
+<p><strong>3. 从 Nginx 容器内部测后端 —— 这里是转折点</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker <span class="built_in">exec</span> -it docker-nginx-1 sh</span><br></pre></td></tr></table></figure>
+
+<p>容器内执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl -v http://web:3000</span><br><span class="line">curl -v http://api:5001/health</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">* Host web:3000 was resolved.</span><br><span class="line">* IPv4: 172.18.0.7</span><br><span class="line">*   Trying 172.18.0.7:3000...</span><br><span class="line">* Connected to web (172.18.0.7) port 3000</span><br><span class="line">&gt; GET / HTTP/1.1</span><br><span class="line">&lt; HTTP/1.1 307 Temporary Redirect</span><br><span class="line">&lt; location: /apps</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">* Host api:5001 was resolved.</span><br><span class="line">* IPv4: 172.18.0.11</span><br><span class="line">* Connected to api (172.18.0.11) port 5001</span><br><span class="line">&lt; HTTP/1.1 200 OK</span><br><span class="line">&#123;&quot;pid&quot;: 25, &quot;status&quot;: &quot;ok&quot;, &quot;version&quot;: &quot;1.13.3&quot;&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>容器内部一切正常</strong>：web 返回 307 跳 <code>/apps</code>，api 健康检查返回 200。但请盯住解析出来的地址 —— <strong><code>172.18.0.7</code>、<code>172.18.0.11</code>，正是那个已经被删掉路由的旧网段。</strong></p>
+<p><strong>4. 确认网络还在用旧子网</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker network <span class="built_in">ls</span></span><br><span class="line">docker inspect docker-nginx-1 | grep -A 5 <span class="string">&quot;Networks&quot;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">NETWORK ID     NAME                        DRIVER    SCOPE</span><br><span class="line">0271fa6b25f2   bridge                      bridge    local</span><br><span class="line">c2d97689e6f0   docker_default              bridge    local</span><br><span class="line">717ee911a842   docker_ssrf_proxy_network   bridge    local</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&quot;Networks&quot;: &#123;</span><br><span class="line">    &quot;docker_default&quot;: &#123;</span><br><span class="line">        &quot;IPAMConfig&quot;: null,</span><br><span class="line">        &quot;Aliases&quot;: [</span><br><span class="line">            &quot;docker-nginx-1&quot;,</span><br></pre></td></tr></table></figure>
+
+<p>Dify 的容器仍然挂在 <code>docker_default</code> 上，而**这个网络的子网还是旧的 <code>172.18.0.0/16</code>**。原因很简单：改 <code>default-address-pools</code> 只影响「以后新建的网络」，不会动已经存在的网络。</p>
+<p><strong>5. 宿主机路由表里已经没有旧网段了</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ip route</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">default via 172.30.38.1 dev ens7 proto static metric 100</span><br><span class="line">172.30.38.0/24 dev ens7 proto kernel scope link src 172.30.38.36 metric 100</span><br><span class="line">192.168.0.0/24 dev docker0 proto kernel scope link src 192.168.0.1 linkdown</span><br><span class="line">192.168.1.0/24 dev br-717ee911a842 proto kernel scope link src 192.168.1.1</span><br><span class="line">192.168.122.0/24 dev virbr0 proto kernel scope link src 192.168.122.1 linkdown</span><br></pre></td></tr></table></figure>
+
+<p><code>172.18.0.0/16</code> 的路由确实没了（<code>192.168.1.0/24</code> 是改完地址池后新建的 ssrf_proxy 网络），但 <code>docker_default</code> 还抱着旧子网不放。</p>
+<h3 id="根因：删了路由，却没重建网络"><a href="#根因：删了路由，却没重建网络" class="headerlink" title="根因：删了路由，却没重建网络"></a>根因：删了路由，却没重建网络</h3><p>完整链条是这样的：</p>
+<ol>
+<li>外部请求到达 Nginx —— 它自己就是 <code>docker_default</code> 里的容器，地址是 <code>172.18.0.x</code>。</li>
+<li>Nginx 把请求代理给 <code>web</code> &#x2F; <code>api</code>，目标是 **<code>172.18.0.x</code>**。</li>
+<li>后端在同一个网桥内能正常收到并处理，回复的包源地址是 <code>172.18.0.x</code>。</li>
+<li>这个回包要出宿主机时，宿主机上<strong>已经没有 <code>172.18.0.0/16</code> 的路由</strong>了 → 回包被丢弃，客户端看到的就是连接重置。</li>
+</ol>
+<p>所以「容器内部自测全通、从外面访问全挂」是必然的：容器之间通信走的是网桥二层，根本不需要宿主机那条路由；一旦要跨出宿主机，路由缺失的问题就暴露了。</p>
+<h3 id="修复"><a href="#修复" class="headerlink" title="修复"></a>修复</h3><p><strong>1. 先确认数据是持久化的（删容器前必做）</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ls</span> -la /workspace/dify/docker/volumes/</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">drwxr-xr-x 13 root root  177 4月  24 17:40 .</span><br><span class="line">drwxr-xr-x  3 root root   18 3月  31 11:50 db</span><br><span class="line">drwxr-xr-x  4 root root   29 3月  31 11:51 certbot</span><br><span class="line">drwxr-xr-x  3 root root   20 3月  31 11:17 myscale</span><br><span class="line">drwxr-xr-x  5 root root  323 4月   7 15:09 weaviate</span><br><span class="line">drwxr-xr-x  3 root root   18 3月  31 11:50 redis</span><br></pre></td></tr></table></figure>
+
+<p>数据库、向量库、Redis 都通过 bind mount 落在宿主机目录里，<strong>删容器不会丢数据</strong>。</p>
+<p><strong>2. 停掉并删除占用旧网络的容器</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker stop docker-db_postgres-1 docker-weaviate-1</span><br><span class="line">docker <span class="built_in">rm</span> docker-db_postgres-1 docker-weaviate-1</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 删掉旧的 <code>docker_default</code> 网络</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker network <span class="built_in">rm</span> docker_default</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker_default</span><br></pre></td></tr></table></figure>
+
+<p><strong>4. 带 profile 重新拉起 Dify</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /workspace/dify/docker</span><br><span class="line">docker compose --profile postgresql --profile weaviate up -d</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[+] Running 14/14</span><br><span class="line"> ✔ Network docker_ssrf_proxy_network    Created</span><br><span class="line"> ✔ Network docker_default               Created</span><br><span class="line"> ✔ Container docker-web-1               Started</span><br><span class="line"> ✔ Container docker-db_postgres-1       Healthy</span><br><span class="line"> ✔ Container docker-redis-1             Started</span><br><span class="line"> ...</span><br><span class="line"> ✔ Container docker-nginx-1             Started</span><br></pre></td></tr></table></figure>
+
+<p><strong>5. 验证新子网</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker network inspect docker_default | grep Subnet</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&quot;Subnet&quot;: &quot;192.168.3.0/24&quot;,</span><br></pre></td></tr></table></figure>
+
+<p><code>192.168.3.0/24</code> —— 已经落在我们设定的 <code>192.168.100.0/16</code> 地址池里了。</p>
+<p><strong>6. 访问验证</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -v http://172.30.38.36/</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">*   Trying 172.30.38.36...</span><br><span class="line">* Connected to 172.30.38.36 (172.30.38.36) port 80 (#0)</span><br><span class="line">&gt; GET / HTTP/1.1</span><br><span class="line">&lt; HTTP/1.1 307 Temporary Redirect</span><br><span class="line">&lt; Server: nginx/1.29.8</span><br><span class="line">&lt; location: /apps</span><br></pre></td></tr></table></figure>
+
+<p><code>307 → /apps</code>，和容器内部自测时后端返回的完全一致 —— <strong>整条链路通了。</strong> 再用 <code>docker ps</code> 复查，所有容器稳定运行、无重启。</p>
+<h3 id="后续优化"><a href="#后续优化" class="headerlink" title="后续优化"></a>后续优化</h3><p>Dify 的有状态服务要靠 <code>--profile</code> 显式启动，很容易忘。写进 <code>.env</code> 一劳永逸：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">&quot;COMPOSE_PROFILES=postgresql,weaviate&quot;</span> &gt;&gt; /workspace/dify/docker/.env</span><br></pre></td></tr></table></figure>
+
+<h2 id="复盘"><a href="#复盘" class="headerlink" title="复盘"></a>复盘</h2><p><strong>时间线</strong></p>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th>事件</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>5 月 6 日</td>
+<td>校外无法访问，定位为 Docker 网段与校园网段冲突；关网桥、删路由、改地址池</td>
+</tr>
+<tr>
+<td>5 月 11 日</td>
+<td>改完仍然无法访问；查明是旧网络没有重建；删除并重建 <code>docker_default</code> 后恢复</td>
+</tr>
+</tbody></table>
+<p><strong>三条经验</strong></p>
+<ol>
+<li><strong>改 <code>default-address-pools</code> 之后必须重建已有网络，只删路由是不够的。</strong> 配置只约束「新建」的网络，已经存在的 <code>docker_default</code> 会一直沿用旧子网 —— 而它的路由又被删了，等于人为制造了一个「内部通、外部不通」的僵局。</li>
+<li><strong><code>docker compose down</code> 不等于删网络。</strong> 反复 <code>up/down</code> 会不断新建自定义桥接网络，每次都从 <code>172.16.0.0/12</code> 里抓一段，迟早和真实网段撞上。要么固定地址池，要么显式管理网络。</li>
+<li><strong>「容器内部通、外部不通」几乎一定是路由&#x2F;网络层的问题，而不是应用层。</strong> 本例里 Nginx 日志干净、容器 healthy、端口在监听，所有应用层指标都正常；真正的突破口是容器内 <code>curl</code> 打出来的是<strong>已被删除路由的旧网段地址</strong>。</li>
+</ol>
+<p><strong>顺手记一个坑</strong>：<code>ip link set br-xxx down</code> 只是关闭网桥，<strong>不会删除系统里残留的冲突路由</strong>，必须再用 <code>ip route del</code> 补一刀，否则路由表里那两条记录还在继续劫持流量。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://cloudlxy.github.io">Cloudlxy</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://cloudlxy.github.io/2026/05/11/dify-docker-network-conflict/">https://cloudlxy.github.io/2026/05/11/dify-docker-network-conflict/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://cloudlxy.github.io" target="_blank">xiaoyu's blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Docker/">Docker</a><a class="post-meta__tags" href="/tags/Dify/">Dify</a><a class="post-meta__tags" href="/tags/%E7%BD%91%E7%BB%9C%E6%8E%92%E6%9F%A5/">网络排查</a></div><div class="post-share"><div class="social-share" data-image="/img/avatar.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Cloudlxy</div><div class="author-info-description">随便写点东西，顺便记录踩过的坑。</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">1</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">3</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/Cloudlxy"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/Cloudlxy" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83"><span class="toc-number">1.</span> <span class="toc-text">环境</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%E4%B8%80%EF%BC%9A%E6%A0%A1%E5%A4%96%E8%AE%BF%E9%97%AE%E4%B8%8D%E4%BA%86%EF%BC%8C%E6%98%AF-Docker-%E5%8A%AB%E6%8C%81%E4%BA%86%E8%B7%AF%E7%94%B1"><span class="toc-number">2.</span> <span class="toc-text">问题一：校外访问不了，是 Docker 劫持了路由</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8E%B0%E8%B1%A1"><span class="toc-number">2.1.</span> <span class="toc-text">现象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8E%9F%E5%9B%A0"><span class="toc-number">2.2.</span> <span class="toc-text">原因</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%84%E7%90%86"><span class="toc-number">2.3.</span> <span class="toc-text">处理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%AA%8C%E8%AF%81"><span class="toc-number">2.4.</span> <span class="toc-text">验证</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%E4%BA%8C%EF%BC%9A%E6%94%B9%E5%AE%8C%E4%B9%8B%E5%90%8E%EF%BC%8C%E4%BE%9D%E7%84%B6%E8%AE%BF%E9%97%AE%E4%B8%8D%E4%BA%86"><span class="toc-number">3.</span> <span class="toc-text">问题二：改完之后，依然访问不了</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8E%B0%E8%B1%A1-1"><span class="toc-number">3.1.</span> <span class="toc-text">现象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8E%92%E6%9F%A5"><span class="toc-number">3.2.</span> <span class="toc-text">排查</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B9%E5%9B%A0%EF%BC%9A%E5%88%A0%E4%BA%86%E8%B7%AF%E7%94%B1%EF%BC%8C%E5%8D%B4%E6%B2%A1%E9%87%8D%E5%BB%BA%E7%BD%91%E7%BB%9C"><span class="toc-number">3.3.</span> <span class="toc-text">根因：删了路由，却没重建网络</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BF%AE%E5%A4%8D"><span class="toc-number">3.4.</span> <span class="toc-text">修复</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%8E%E7%BB%AD%E4%BC%98%E5%8C%96"><span class="toc-number">3.5.</span> <span class="toc-text">后续优化</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%8D%E7%9B%98"><span class="toc-number">4.</span> <span class="toc-text">复盘</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/05/11/dify-docker-network-conflict/" title="Dify 部署踩坑：Docker 网段冲突导致校外无法访问">Dify 部署踩坑：Docker 网段冲突导致校外无法访问</a><time datetime="2026-05-11T10:06:37.000Z" title="发表于 2026-05-11 18:06:37">2026-05-11</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Cloudlxy</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><div class="js-pjax"></div><script>
+/* 首页 banner 视频背景。
+   只在首页、桌面宽度、且用户没有开启「减少动态效果」时加载；
+   其余情况保留 index_img 的静态图作为兜底。
+   注意：路径写的是根路径（本站 root 为 /），若以后改成项目站点需要同步改。 */
+(function () {
+  var header = document.getElementById('page-header');
+  if (!header || !header.classList.contains('full_page')) return;
+  if (window.matchMedia('(max-width: 768px)').matches) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var v = document.createElement('video');
+  v.id = 'bg-video';
+  v.src = '/video/bg-loop.mp4';
+  v.poster = '/img/bg-poster.jpg';
+  v.muted = true;          /* 不静音浏览器不允许自动播放 */
+  v.defaultMuted = true;
+  v.loop = true;
+  v.autoplay = true;
+  v.playsInline = true;
+  v.setAttribute('playsinline', '');
+  v.setAttribute('webkit-playsinline', '');
+  v.setAttribute('aria-hidden', 'true');
+  v.setAttribute('tabindex', '-1');
+  header.insertBefore(v, header.firstChild);
+
+  /* 少数浏览器仍会拦自动播放，这里再显式试一次，失败也无所谓（静态图还在） */
+  var p = v.play();
+  if (p && p.catch) p.catch(function () {});
+})();
+</script>
+<div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.7.0"></script></div></div></body></html>
