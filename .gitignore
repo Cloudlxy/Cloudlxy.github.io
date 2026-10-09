@@ -10,3 +10,7 @@ _multiconfig.yml
 
 # npm 缓存目录（本机沙盒环境使用，无需提交）
 .npm-cache/
+
+# 视频压制过程中的临时产物（候选文件、抽帧图），不要进仓库
+.video-out/
+.frames/

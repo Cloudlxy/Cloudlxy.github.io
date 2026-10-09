@@ -75,7 +75,9 @@ disable_top_img: false
 default_top_img: /img/banner.jpg
 
 # The banner image of index page
-index_img: /img/banner.jpg
+# 首页的静态兜底图 = 视频的第一帧（见 inject 里的视频背景）。
+# 这样视频加载前、小屏、以及开启「减少动态效果」时看到的画面和视频开头一致，不会跳。
+index_img: /img/bg-poster.jpg
 
 # The banner image of archive page
 archive_img:
@@ -152,7 +154,9 @@ post_meta:
 # The top_img settings of home page
 # default: top img - full screen, site info - middle
 # The position of site info, eg: 300px/300em/300rem/10%
-index_site_info_top:
+# 主题默认 43%。但视频里那只白色小熊占画面 y 37%~60%（实测），
+# 标题放 43% 会直接压在小熊身上，所以下移到 65%，落在小熊下方。
+index_site_info_top: 65%
 # The height of top_img, eg: 300px/300em/300rem
 index_top_img_height:
 
@@ -1070,9 +1074,67 @@ css_prefix: true
 # Insert the code to head (before '</head>' tag) and the bottom (before '</body>' tag)
 inject:
   head:
-    # - <link rel="stylesheet" href="/xxx.css">
+    - |
+      <style>
+      /* ===== 首页 banner 视频背景 ===== */
+      /* 视频铺满整个 header，盖在静态背景图（index_img）之上 */
+      #page-header #bg-video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 0;
+        pointer-events: none;
+      }
+      /* 主题自带的暗遮罩必须排在视频之上，
+         否则白色标题压在明亮的青绿水面上会看不清。
+         主题没给 :before 声明过 z-index，所以这里只补 z-index，不冲突。 */
+      #page-header:before { z-index: 1; }
+      /* 标题和下滑箭头要浮在暗遮罩之上。
+         注意：这里只加 z-index，绝不写 position ——
+         主题已把它们设成 absolute（#site-info 还有 top: 65%），
+         用更高优先级覆盖 position 会把标题顶出画面。
+         #nav 不用管：主题自带 z-index: 90，本来就压在最上面。 */
+      #page-header #site-info,
+      #page-header #scroll-down {
+        z-index: 2;
+      }
+      </style>
   bottom:
-    # - <script src="xxxx"></script>
+    - |
+      <script>
+      /* 首页 banner 视频背景。
+         只在首页、桌面宽度、且用户没有开启「减少动态效果」时加载；
+         其余情况保留 index_img 的静态图作为兜底。
+         注意：路径写的是根路径（本站 root 为 /），若以后改成项目站点需要同步改。 */
+      (function () {
+        var header = document.getElementById('page-header');
+        if (!header || !header.classList.contains('full_page')) return;
+        if (window.matchMedia('(max-width: 768px)').matches) return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        var v = document.createElement('video');
+        v.id = 'bg-video';
+        v.src = '/video/bg-loop.mp4';
+        v.poster = '/img/bg-poster.jpg';
+        v.muted = true;          /* 不静音浏览器不允许自动播放 */
+        v.defaultMuted = true;
+        v.loop = true;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.setAttribute('playsinline', '');
+        v.setAttribute('webkit-playsinline', '');
+        v.setAttribute('aria-hidden', 'true');
+        v.setAttribute('tabindex', '-1');
+        header.insertBefore(v, header.firstChild);
+
+        /* 少数浏览器仍会拦自动播放，这里再显式试一次，失败也无所谓（静态图还在） */
+        var p = v.play();
+        if (p && p.catch) p.catch(function () {});
+      })();
+      </script>
 
 # CDN Settings
 # Don't modify the following settings unless you know how they work
