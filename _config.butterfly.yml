@@ -61,7 +61,9 @@ social:
 favicon: /favicon.png
 
 avatar:
-  img: /img/butterfly-icon.png
+  # 侧边栏头像。图片来自桌面的 head.jpg，处理成 400x400 后放在 source/img/avatar.jpg
+  # effect: true 会让鼠标悬停时头像旋转，false 则不动
+  img: /img/avatar.jpg
   effect: false
 
 # Disable all banner images
