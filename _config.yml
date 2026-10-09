@@ -5,14 +5,13 @@
 # Site
 ## title 会同时用于「浏览器标签页标题」和网站顶部显示的名字
 title: "xiaoyu's blog"
-## 注意：这里留空，标签页才会是干净的 "xiaoyu's blog"。
+## 这里留空，标签页才会是干净的 "xiaoyu's blog"。
 ## 因为 Butterfly 的首页标题规则是 `title + ' - ' + subtitle`（见主题 head.pug），
-## 填了副标题就会变成 "xiaoyu's blog - 记录、思考与成长"。
-## 想要带上副标题就把下面这行改成 subtitle: '记录、思考与成长'。
+## 填了就会变成 "xiaoyu's blog - 随便写点东西的地方"。
 subtitle: ''
-## 首页大图上打字机效果的那两行文字在 _config.butterfly.yml 的 subtitle.sub 里，
-## 和这里的 subtitle 无关，留空不影响它。
-description: '一个用 Hexo 搭建的个人博客，记录技术笔记与生活随笔。'
+## 首页大图上、标题下方那行「标题注释」在 _config.butterfly.yml 的 subtitle.sub 里，
+## 和这里的 subtitle 是两套配置，留空不影响它。
+description: '随便写点东西的地方。'
 keywords: 'Hexo, 博客, 前端, 笔记'
 author: Cloudlxy
 language: zh-CN

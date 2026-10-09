@@ -173,9 +173,9 @@ subtitle:
   # 3 - jinrishici.com
   source: false
   # If you close the typewriter effect, the subtitle will only show the first line of sub
+  # 这就是首页大图上、站点标题下方那行「标题注释」，和 _config.yml 的 subtitle 无关
   sub:
-    - 记录、思考与成长
-    - 一个用 Hexo 搭建的个人博客
+    - 随便写点东西的地方
 
 # Article layout on the homepage
 # 1: Cover on the left, info on the right
