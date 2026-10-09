@@ -1101,6 +1101,17 @@ inject:
       #page-header #scroll-down {
         z-index: 2;
       }
+      /* 首页去掉主题那层 30% 黑遮罩：实测白字标题不加遮罩也读得清，
+         去掉后画面更通透，不会发灰发闷。
+         只在首页（.full_page）生效，内页的渐变背景保持主题默认不动。
+         可读性改用只作用于文字的阴影来保，不压平整张画面。 */
+      #page-header.full_page:before {
+        background-color: transparent !important;
+      }
+      #page-header.full_page #site-title,
+      #page-header.full_page #site-subtitle {
+        text-shadow: 0 2px 10px rgba(0, 0, 0, .55), 0 1px 3px rgba(0, 0, 0, .5);
+      }
       </style>
   bottom:
     - |
