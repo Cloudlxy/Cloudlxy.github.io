@@ -1127,13 +1127,61 @@ inject:
       #page-header #post-info #post-meta {
         text-shadow: 0 2px 10px rgba(0, 0, 0, .55), 0 1px 3px rgba(0, 0, 0, .5);
       }
+      /* ===== 首页视频的加载进度条 ===== */
+      /* 层级：视频 0 → 主题遮罩 1 → 进度条 2 → #nav 90。
+         进度条只在视频没就绪时露出（加载超过 400ms 才显示，避免快网下一闪而过），
+         视频开播后补满并淡出、随后从 DOM 移除。
+         注意只加 z-index，不写 position，理由同上。 */
+      #bg-loader {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        opacity: 0;
+        transition: opacity .35s ease;
+        pointer-events: none;
+      }
+      #bg-loader.is-on { opacity: 1; }
+      #bg-loader .track {
+        width: 220px;
+        max-width: 44vw;
+        height: 3px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, .26);
+        overflow: hidden;
+      }
+      #bg-loader .fill {
+        width: 0;
+        height: 100%;
+        border-radius: 3px;
+        background: linear-gradient(90deg, #8ff0d0, #d9fff2);
+        transition: width .25s ease;
+      }
+      #bg-loader .label {
+        font-size: 12px;
+        line-height: 1;
+        letter-spacing: .08em;
+        color: rgba(255, 255, 255, .86);
+        text-shadow: 0 1px 4px rgba(0, 0, 0, .5);
+      }
+      /* 视频就绪后淡入，省的从静态图硬切到画面 */
+      #page-header #bg-video {
+        opacity: 0;
+        transition: opacity .6s ease;
+      }
+      #page-header #bg-video.is-on { opacity: 1; }
       </style>
   bottom:
     - |
       <script>
-      /* 首页 banner 视频背景。
+      /* 首页 banner 视频背景 + 加载进度条。
          只在首页、桌面宽度、且用户没有开启「减少动态效果」时加载；
-         其余情况保留 index_img 的静态图作为兜底。
+         其余情况保留 index_img 的静态图作为兜底，所以永远不会白屏。
          注意：路径写的是根路径（本站 root 为 /），若以后改成项目站点需要同步改。 */
       (function () {
         var header = document.getElementById('page-header');
@@ -1155,6 +1203,64 @@ inject:
         v.setAttribute('aria-hidden', 'true');
         v.setAttribute('tabindex', '-1');
         header.insertBefore(v, header.firstChild);
+
+        /* ---- 加载进度条 ---- */
+        var loader = document.createElement('div');
+        loader.id = 'bg-loader';
+        loader.setAttribute('aria-hidden', 'true');
+        loader.innerHTML =
+          '<div class="track"><div class="fill"></div></div>' +
+          '<div class="label">视频加载中 0%</div>';
+        header.appendChild(loader);
+
+        var fill = loader.querySelector('.fill');
+        var label = loader.querySelector('.label');
+        var finished = false;
+        var showTimer = setTimeout(function () { loader.classList.add('is-on'); }, 400);
+
+        function hide() {
+          clearTimeout(showTimer);
+          loader.classList.remove('is-on');
+        }
+        function setPct(ratio) {
+          var n = Math.max(0, Math.min(1, ratio));
+          var pct = finished ? 100 : Math.round(n * 100);
+          fill.style.width = pct + '%';
+          label.textContent = finished ? '加载完成' : ('视频加载中 ' + pct + '%');
+        }
+        function finish() {
+          if (finished) return;
+          finished = true;
+          clearTimeout(showTimer);
+          setPct(1);
+          v.classList.add('is-on');
+          setTimeout(function () { loader.classList.remove('is-on'); }, 320);
+          setTimeout(function () {
+            if (loader.parentNode) loader.parentNode.removeChild(loader);
+          }, 900);
+        }
+        /* 用「已缓冲时长 / 全片时长」当读数。
+           真正开播前最多只画到 92%，剩下 8% 留给 finish() 补满，
+           这样进度条不会长时间停在 100% 却还没画面。 */
+        function tick() {
+          if (finished) return;
+          var r = 0;
+          try {
+            if (v.duration && v.buffered.length) {
+              r = v.buffered.end(v.buffered.length - 1) / v.duration;
+            }
+          } catch (e) {}
+          setPct(Math.min(r, 0.92));
+        }
+        v.addEventListener('loadedmetadata', tick);
+        v.addEventListener('progress', tick);
+        v.addEventListener('canplay', tick);
+        v.addEventListener('canplaythrough', function () { if (!finished) setPct(0.92); });
+        v.addEventListener('playing', finish);
+        /* 视频拿不到就悄悄收掉进度条：静态图还在，不打扰用户 */
+        v.addEventListener('error', hide);
+        /* 兜底：无论卡在哪一步，30 秒后都收掉 */
+        setTimeout(hide, 30000);
 
         /* 少数浏览器仍会拦自动播放，这里再显式试一次，失败也无所谓（静态图还在） */
         var p = v.play();
