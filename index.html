@@ -1,4 +1,29 @@
-<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>xiaoyu's blog</title><meta name="author" content="Cloudlxy"><meta name="copyright" content="Cloudlxy"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="随便写点东西的地方。">
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head>
+<style id="bg-loader-style">
+html{background:#071916}
+#bg-loader{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9000;
+display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+opacity:1;transition:opacity .45s ease;
+background:radial-gradient(circle at 50% 42%,#0e2c28 0%,#071916 55%,#030b0a 100%);
+animation:bg-loader-giveup .6s ease 180s forwards}
+@media (min-width:769px) and (prefers-reduced-motion:no-preference){#bg-loader{display:flex}}
+#bg-loader.is-off{opacity:0;pointer-events:none}
+@keyframes bg-loader-giveup{to{opacity:0;visibility:hidden}}
+#bg-loader .track{width:220px;max-width:44vw;height:3px;border-radius:3px;
+background:rgba(255,255,255,.22);overflow:hidden}
+#bg-loader .fill{width:0;height:100%;border-radius:3px;
+background:linear-gradient(90deg,#8ff0d0,#d9fff2);transition:width .25s ease}
+#bg-loader .label{font-size:12px;line-height:1;letter-spacing:.08em;
+color:rgba(255,255,255,.86);text-shadow:0 1px 4px rgba(0,0,0,.5)}
+#bg-loader .detail{font-size:11px;line-height:1;letter-spacing:.04em;
+color:rgba(255,255,255,.5);text-shadow:0 1px 4px rgba(0,0,0,.5)}
+#bg-loader .hint{margin:2px 0 0;font-size:12px;line-height:1.5;letter-spacing:.04em;
+color:rgba(255,255,255,.72);text-shadow:0 1px 4px rgba(0,0,0,.5)}
+#bg-loader .skip{cursor:pointer;padding:7px 16px;border-radius:999px;
+border:1px solid rgba(255,255,255,.32);background:rgba(255,255,255,.06);
+color:rgba(255,255,255,.9);font-size:12px;line-height:1;letter-spacing:.04em}
+#bg-loader .skip:hover{background:rgba(255,255,255,.14)}
+</style><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>xiaoyu's blog</title><meta name="author" content="Cloudlxy"><meta name="copyright" content="Cloudlxy"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="随便写点东西的地方。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="xiaoyu&#39;s blog">
 <meta property="og:url" content="https://cloudlxy.github.io/index.html">
@@ -17,7 +42,7 @@
     "cloudlxy.github.io"
   ],
   "url": "https://cloudlxy.github.io/"
-}</script><link rel="shortcut icon" href="/favicon.png"><link rel="canonical" href="https://cloudlxy.github.io/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><script>
+}</script><link rel="shortcut icon" href="/favicon.png"><link rel="canonical" href="https://cloudlxy.github.io/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preload" as="style" media="(min-width:769px) and (prefers-reduced-motion:no-preference)" href="/css/index.css?v=5.7.0" onload="this.onload=null;this.rel='stylesheet';this.media='all'"><link rel="stylesheet" media="(max-width:768px),(prefers-reduced-motion:reduce)" href="/css/index.css?v=5.7.0"><link rel="preload" as="style" media="(min-width:769px) and (prefers-reduced-motion:no-preference)" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet';this.media='all'"><link rel="stylesheet" media="(max-width:768px),(prefers-reduced-motion:reduce)" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><script>
     (() => {
       
     const saveToLocal = {
@@ -235,75 +260,15 @@
 #page-header #post-info #post-meta {
   text-shadow: 0 2px 10px rgba(0, 0, 0, .55), 0 1px 3px rgba(0, 0, 0, .5);
 }
-/* ===== 首页的加载遮罩 + 进度条 ===== */
 /* 背景图到达之前，header 先垫一层和遮罩同色的墨绿。
    浏览器默认底色是浅色/蓝调，图片没到的那一瞬就是之前看到的"蓝屏"。
    这条对移动端和内页同样生效（那两种情况下不显示加载遮罩）。 */
 #page-header {
   background-color: #071916;
 }
-/* 首屏整个被一层深色遮罩盖住（取画面的墨绿基调），中间是进度条；
-   视频全部加载完之后遮罩淡出、视频淡入，一次性呈现完整样式。
-   层级取 9000，压过 #nav(90) 和 #rightside(100)。
-
-   这个 div 由 scripts/bg-loader.js 插在 body 开始标签的后面，
-   所以它跟首屏一起绘制 —— 加载页是真的「一开始就出现」，
-   而不是等 HTML 解析到 </body> 附近才轮到自己
-   （那样会先闪一下 header 的背景图，也就是视频的第一帧，再冒出进度条）。
-
-   这里默认 display: none，只有「桌面宽度 + 没开减少动态效果」才打开：
-   移动端和开了减少动效的人根本看不到它，判定全在 CSS 里，不依赖 JS。
-   万一脚本没跑起来，@keyframes 那行 30 秒后自动撤掉，不会把人锁在黑屏里。 */
-#bg-loader {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 9000;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  opacity: 1;
-  transition: opacity .45s ease;
-  background: radial-gradient(circle at 50% 42%, #0e2c28 0%, #071916 55%, #030b0a 100%);
-  animation: bg-loader-giveup .6s ease 30s forwards;
-}
-@media (min-width: 769px) and (prefers-reduced-motion: no-preference) {
-  #bg-loader { display: flex; }
-}
-/* 撤下时淡出，同时把鼠标事件让出去（默认是挡着的，加载期间不让人点到底下的东西） */
-#bg-loader.is-off {
-  opacity: 0;
-  pointer-events: none;
-}
-@keyframes bg-loader-giveup {
-  to { opacity: 0; visibility: hidden; }
-}
-#bg-loader .track {
-  width: 220px;
-  max-width: 44vw;
-  height: 3px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, .22);
-  overflow: hidden;
-}
-#bg-loader .fill {
-  width: 0;
-  height: 100%;
-  border-radius: 3px;
-  background: linear-gradient(90deg, #8ff0d0, #d9fff2);
-  transition: width .25s ease;
-}
-#bg-loader .label {
-  font-size: 12px;
-  line-height: 1;
-  letter-spacing: .08em;
-  color: rgba(255, 255, 255, .86);
-  text-shadow: 0 1px 4px rgba(0, 0, 0, .5);
-}
+/* 加载遮罩（#bg-loader）的样式、DOM、判定脚本全在 scripts/bg-loader.js 里，
+   由 after_render:html 过滤器插进首页 —— 见那个文件的头部注释。
+   分开放是因为它必须抢在 head 最前面，而这里的内容排在 head 收尾之前。 */
 /* 视频就绪后淡入，省的从静态图硬切到画面 */
 #page-header #bg-video {
   opacity: 0;
@@ -312,10 +277,225 @@
 #page-header #bg-video.is-on { opacity: 1; }
 </style>
 <meta name="generator" content="Hexo 7.3.0"><link rel="alternate" href="/atom.xml" title="xiaoyu's blog" type="application/atom+xml">
-</head><body><div id="bg-loader" aria-hidden="true">
+<noscript><style>#bg-loader{display:none!important}</style><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"></noscript></head><body>
+<div id="bg-loader" aria-hidden="true">
   <div class="track"><div class="fill"></div></div>
-  <div class="label">视频加载中 0%</div>
-</div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">1</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">3</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div></div></div><div class="page" id="body-wrap"><header class="full_page fixed" id="page-header" style="background-image: url(/img/bg-poster.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">xiaoyu's blog</span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="site-info"><h1 id="site-title">xiaoyu's blog</h1><div id="site-subtitle"><span id="subtitle"></span></div><div id="site_social_icons"><a class="social-icon" href="https://github.com/Cloudlxy" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a></div></div><div id="scroll-down"><i class="fas fa-angle-down scroll-down-effects"></i></div></header><main class="layout" id="content-inner"><div class="recent-posts nc" id="recent-posts"><div class="recent-post-items"><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/2026/05/11/dify-docker-network-conflict/" title="Dify 部署踩坑：Docker 网段冲突导致校外无法访问">Dify 部署踩坑：Docker 网段冲突导致校外无法访问</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2026-05-11T10:06:37.000Z" title="发表于 2026-05-11 18:06:37">2026-05-11</time></span><span class="article-meta"><span class="article-meta-separator">|</span><i class="fas fa-inbox"></i><a class="article-meta__categories" href="/categories/notes/">折腾记录</a></span></div><div class="content">一台校园网里的服务器，Dify 用 Docker Compose 部署。这篇记录的是两个前后相连的故障：  校外完全访问不了 —— Docker 自动分配的虚拟网段和校园网段撞车，把校外流量的路由「劫持」到了 Docker 网桥上。 按建议改完地址池、删掉冲突路由之后，校外依然访问不了 —— 因为旧的 Compose 网络没有重建，容器还在用那个已经被删掉路由的旧网段，回包被丢弃。  第一个问题解决的是「路由」，第二个问题解决的是「网络」。只删路由、不重建网络，等于没修完 —— 这是整件事最值得记下来的一点。   环境   项目 值    服务器 IP 172.30.38.36   校园网段 172.30.38.0/24，网关 172.30.38.1   网卡 ens7   Dify 部署方式 Docker Compose，源码路径 /workspace/dify/docker   Dify 版本 langgenius/dify-api:1.13.3   Nginx nginx:1.29.8（跑在容器里）   问题一：校外访问不了，是 Docker 劫持了路由现象ip route...</div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Cloudlxy</div><div class="author-info-description">随便写点东西，顺便记录踩过的坑。</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">1</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">3</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/Cloudlxy"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/Cloudlxy" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a></div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/05/11/dify-docker-network-conflict/" title="Dify 部署踩坑：Docker 网段冲突导致校外无法访问">Dify 部署踩坑：Docker 网段冲突导致校外无法访问</a><time datetime="2026-05-11T10:06:37.000Z" title="发表于 2026-05-11 18:06:37">2026-05-11</time></div></div></div></div><div class="card-widget card-categories"><div class="item-headline"><i class="fas fa-folder-open"></i><span>分类</span></div>
+  <div class="label">正在加载 0%</div>
+  <div class="detail">正在连接…</div>
+  <p class="hint" hidden>网络较慢，视频仍在继续加载……</p>
+  <button class="skip" type="button" hidden>不等了，直接进入</button>
+</div>
+<script>(function () {
+  var loader = document.getElementById('bg-loader');
+  if (!loader) return;
+  var fill = loader.querySelector('.fill');
+  var label = loader.querySelector('.label');
+  var detail = loader.querySelector('.detail');
+  var hint = loader.querySelector('.hint');
+  var skip = loader.querySelector('.skip');
+
+  function drop() { if (loader.parentNode) loader.parentNode.removeChild(loader); }
+
+  /* 移动端和开了「减少动态效果」的人不用加载页，更不该白下那段 10MB 视频。
+     判定放在最前面，一个字节都不浪费。 */
+  if (window.matchMedia('(max-width: 768px)').matches ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches) { drop(); return; }
+
+  /* 脚本活着，就撤掉 CSS 里那条 180 秒兜底动画，判定权收回自己手里 */
+  loader.style.animation = 'none';
+
+  var done = { video: false, poster: false, css: false, page: false };
+  var revealed = false;
+  var v = null, vDuration = 0;
+  var idleSince = 0, lastAdvanceAt = Date.now(), lastPct = -1;
+
+  /* ---------- 进度 ----------
+     视频 9.78MB 是绝对大头，所以它按「已缓冲时长 / 全片时长」实时算；
+     海报 410KB、样式表 ~205KB、其余零碎，按体积折算成固定份额。
+     权重加起来正好 1。 */
+  var W_VIDEO = 0.93, W_POSTER = 0.037, W_CSS = 0.018, W_PAGE = 0.015;
+
+  function bufferedEnd() {
+    try { return v && v.buffered.length ? v.buffered.end(v.buffered.length - 1) : 0; }
+    catch (e) { return 0; }
+  }
+
+  function ratio() {
+    var vid = vDuration > 0 ? Math.min(1, bufferedEnd() / vDuration) : 0;
+    return Math.min(0.995, W_VIDEO * vid +
+      (done.poster ? W_POSTER : 0) + (done.css ? W_CSS : 0) + (done.page ? W_PAGE : 0));
+  }
+
+  function render() {
+    var n = Math.round(ratio() * 100);
+    fill.style.width = n + '%';
+    label.textContent = '正在加载 ' + n + '%';
+    if (vDuration > 0) {
+      var end = Math.min(bufferedEnd(), vDuration);
+      detail.textContent = '视频缓冲 ' + end.toFixed(1) + ' / ' + vDuration.toFixed(1) + ' 秒';
+    }
+    /* 只有百分比真的动了才算「有进展」，卡住检测看的是这个 */
+    if (n !== lastPct) { lastPct = n; lastAdvanceAt = Date.now(); }
+  }
+
+  function reveal() {
+    if (revealed) return;
+    revealed = true;
+    fill.style.width = '100%';
+    label.textContent = '正在加载 100%';
+    detail.textContent = '';
+    hint.hidden = true; skip.hidden = true;
+    if (v) {
+      v.classList.add('is-on');
+      var p = v.play();
+      if (p && p.catch) p.catch(function () {});
+    }
+    /* 先让人看见 100%，再淡出，避免进度条差最后一格就没了 */
+    setTimeout(function () {
+      loader.classList.add('is-off');
+      setTimeout(drop, 900);
+    }, 260);
+  }
+
+  /* ---------- 视频 ----------
+     判定「加载完」优先看缓冲区间是否覆盖全片；
+     浏览器铺满之后会自己停下（networkState === NETWORK_IDLE）并且不再涨，
+     这种情况停 2 秒也认它加载完 —— 否则会死在 99% 等到超时。 */
+  function videoReady() {
+    if (done.video) return true;
+    if (!v || !vDuration) return false;
+    if (bufferedEnd() >= vDuration - 0.25) { done.video = true; return true; }
+    if (v.readyState >= 4 && v.networkState === 1) {
+      if (!idleSince) idleSince = Date.now();
+      if (Date.now() - idleSince > 2000) { done.video = true; return true; }
+    } else { idleSince = 0; }
+    return false;
+  }
+
+  function allDone() { videoReady(); return done.video && done.poster && done.css && done.page; }
+
+  function attach() {
+    var header = document.getElementById('page-header');
+    if (!header || !header.classList.contains('full_page')) return false;
+    v = document.createElement('video');
+    v.id = 'bg-video';
+    v.src = '/video/bg-loop.mp4';
+    v.poster = '/img/bg-poster.jpg';
+    v.preload = 'auto';      /* 明确要求把整片拉下来，进度才有得读 */
+    v.muted = true;          /* 不静音浏览器不允许自动播放 */
+    v.defaultMuted = true;
+    v.loop = true;
+    v.autoplay = true;
+    v.playsInline = true;
+    v.setAttribute('playsinline', '');
+    v.setAttribute('webkit-playsinline', '');
+    v.setAttribute('aria-hidden', 'true');
+    v.setAttribute('tabindex', '-1');
+    header.insertBefore(v, header.firstChild);
+
+    v.addEventListener('loadedmetadata', function () { vDuration = v.duration || 0; render(); });
+    v.addEventListener('progress', render);
+    v.addEventListener('canplay', render);
+    v.addEventListener('canplaythrough', render);
+    v.addEventListener('playing', render);
+    /* 视频拿不到就直接揭开：静态海报还在，不把人挡在外面 */
+    v.addEventListener('error', function () { done.video = true; reveal(); });
+
+    /* 立刻开播（静音、被遮罩盖着看不见）：Chrome 里「正在播放的媒体」是最高优先级，
+       这样这 9.78MB 不会被样式表、图片挤到后面；揭开时它已经在正常循环了。 */
+    var p = v.play();
+    if (p && p.catch) p.catch(function () {});
+    return true;
+  }
+
+  /* 这段脚本跑在 <body> 的开头，#page-header 还没被解析出来。
+     它就在后面几个字节处，用 MutationObserver 接上几乎不花时间，
+     比「先建好再搬家」稳 —— 移动 DOM 里的 <video> 有可能让它重新下载。 */
+  if (!attach()) {
+    var mo = new MutationObserver(function () { if (attach()) mo.disconnect(); });
+    mo.observe(document.documentElement, { childList: true, subtree: true });
+    var tries = 0;
+    var poll = setInterval(function () {
+      if (attach()) { clearInterval(poll); mo.disconnect(); return; }
+      if (++tries > 600) {
+        clearInterval(poll);
+        mo.disconnect();
+        done.video = true;   /* 找不到 header：放行，别把人卡住 */
+        render();
+      }
+    }, 16);
+  }
+
+  /* ---------- 海报 ----------
+     揭示后 header 的底图就是它，两处用的是同一个 URL，只会发一次请求。 */
+  var poster = new Image();
+  poster.onload = poster.onerror = function () { done.poster = true; render(); };
+  poster.src = '/img/bg-poster.jpg';
+
+  /* ---------- 样式表 ----------
+     由过滤器改成 rel=preload 的那个 /css/index.css。
+     它没到位就不揭开，所以不会闪一下没样式的裸首页。 */
+  var cssLink = document.querySelector('link[rel="preload"][as="style"][href*="/css/index.css"]');
+  function cssLoaded() {
+    if (done.css) return;
+    done.css = true;
+    /* 样式表可能晚于 DOMContentLoaded 才应用，主题 main.js 在 init 那一次
+       量到的元素宽度是裸 HTML 的（它只量一次）。它的 resize 回调不会重新量，
+       只重跑一遍判定，所以这次 resize 只能让依赖布局的判定重来一次，
+       不要指望它修正宽度。菜单项少的站，这点差异看不出来。 */
+    if (document.readyState !== 'loading') window.dispatchEvent(new Event('resize'));
+    render();
+  }
+  if (!cssLink) { done.css = true; }
+  else if (cssLink.sheet) { cssLoaded(); }
+  else {
+    cssLink.addEventListener('load', cssLoaded);
+    cssLink.addEventListener('error', cssLoaded);
+  }
+
+  /* 极少数浏览器对 <link onload> 支持不好：4 秒后还没接回样式表就手动接回来。
+     media 也要一起改成 all —— 否则万一是「媒体查询当时不匹配」，
+     改了 rel 也还是不生效，桌面端就永久裸奔了。 */
+  setTimeout(function () {
+    var ls = document.querySelectorAll('link[rel="preload"][as="style"]');
+    for (var i = 0; i < ls.length; i++) {
+      ls[i].rel = 'stylesheet';
+      ls[i].media = 'all';
+    }
+  }, 4000);
+
+  /* ---------- 整页 ----------
+     window.load 覆盖剩下的零碎（JS、字体、内嵌图）。
+     <video> 不会拖住 load 事件，所以视频那边单独判定。 */
+  if (document.readyState === 'complete') { done.page = true; }
+  else { window.addEventListener('load', function () { done.page = true; render(); }); }
+
+  skip.addEventListener('click', function () { reveal(); });
+
+  /* 出路按钮：默认行为仍然是「等全部加载完」，它只是不让人被进度条困住。
+     两个触发条件 —— 干等了 20 秒（正常慢链路，10MB 要几分钟），
+     或者 8 秒毫无进展（那是真卡住了）。 */
+  var startedAt = Date.now();
+  var timer = setInterval(function () {
+    render();
+    if (allDone()) {
+      clearInterval(timer);
+      reveal();
+      return;
+    }
+    if (!hint.hidden) return;
+    if (Date.now() - startedAt > 20000 || Date.now() - lastAdvanceAt > 8000) {
+      hint.hidden = false;
+      skip.hidden = false;
+    }
+  }, 250);
+
+  /* 真正的死局兜底：5 分钟还没等到，就带着海报先揭开，
+     视频之后缓冲好了仍会自己淡入（v 一直挂在 header 上）。 */
+  setTimeout(function () { if (!revealed) reveal(); }, 300000);
+
+  render();
+})();</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">1</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">3</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div></div></div><div class="page" id="body-wrap"><header class="full_page fixed" id="page-header" style="background-image: url(/img/bg-poster.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">xiaoyu's blog</span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="site-info"><h1 id="site-title">xiaoyu's blog</h1><div id="site-subtitle"><span id="subtitle"></span></div><div id="site_social_icons"><a class="social-icon" href="https://github.com/Cloudlxy" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a></div></div><div id="scroll-down"><i class="fas fa-angle-down scroll-down-effects"></i></div></header><main class="layout" id="content-inner"><div class="recent-posts nc" id="recent-posts"><div class="recent-post-items"><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/2026/05/11/dify-docker-network-conflict/" title="Dify 部署踩坑：Docker 网段冲突导致校外无法访问">Dify 部署踩坑：Docker 网段冲突导致校外无法访问</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2026-05-11T10:06:37.000Z" title="发表于 2026-05-11 18:06:37">2026-05-11</time></span><span class="article-meta"><span class="article-meta-separator">|</span><i class="fas fa-inbox"></i><a class="article-meta__categories" href="/categories/notes/">折腾记录</a></span></div><div class="content">一台校园网里的服务器，Dify 用 Docker Compose 部署。这篇记录的是两个前后相连的故障：  校外完全访问不了 —— Docker 自动分配的虚拟网段和校园网段撞车，把校外流量的路由「劫持」到了 Docker 网桥上。 按建议改完地址池、删掉冲突路由之后，校外依然访问不了 —— 因为旧的 Compose 网络没有重建，容器还在用那个已经被删掉路由的旧网段，回包被丢弃。  第一个问题解决的是「路由」，第二个问题解决的是「网络」。只删路由、不重建网络，等于没修完 —— 这是整件事最值得记下来的一点。   环境   项目 值    服务器 IP 172.30.38.36   校园网段 172.30.38.0/24，网关 172.30.38.1   网卡 ens7   Dify 部署方式 Docker Compose，源码路径 /workspace/dify/docker   Dify 版本 langgenius/dify-api:1.13.3   Nginx nginx:1.29.8（跑在容器里）   问题一：校外访问不了，是 Docker 劫持了路由现象ip route...</div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Cloudlxy</div><div class="author-info-description">随便写点东西，顺便记录踩过的坑。</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">1</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">3</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/Cloudlxy"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/Cloudlxy" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a></div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/05/11/dify-docker-network-conflict/" title="Dify 部署踩坑：Docker 网段冲突导致校外无法访问">Dify 部署踩坑：Docker 网段冲突导致校外无法访问</a><time datetime="2026-05-11T10:06:37.000Z" title="发表于 2026-05-11 18:06:37">2026-05-11</time></div></div></div></div><div class="card-widget card-categories"><div class="item-headline"><i class="fas fa-folder-open"></i><span>分类</span></div>
           <ul class="card-category-list" id="aside-cat-list">
             <li class="card-category-list-item "><a class="card-category-list-link" href="/categories/notes/"><span class="card-category-list-name">折腾记录</span><span class="card-category-list-count">1</span></a></li>
           </ul></div><div class="card-widget card-tags"><div class="item-headline"><i class="fas fa-tags"></i><span>标签</span></div><div class="card-tag-cloud"><a href="/tags/Dify/" style="font-size: 1.1em; color: #999">Dify</a> <a href="/tags/Docker/" style="font-size: 1.1em; color: #999">Docker</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E6%8E%92%E6%9F%A5/" style="font-size: 1.1em; color: #999">网络排查</a></div></div><div class="card-widget card-archives">
@@ -333,7 +513,7 @@
         </li>
       
     </ul>
-  </div><div class="card-widget card-webinfo"><div class="item-headline"><i class="fas fa-chart-line"></i><span>网站信息</span></div><div class="webinfo"><div class="webinfo-item"><div class="item-name">文章数目 :</div><div class="item-count">1</div></div><div class="webinfo-item"><div class="item-name">最后更新时间 :</div><div class="item-count" id="last-push-date" data-lastPushDate="2026-10-10T02:38:55.952Z"><i class="fa-solid fa-spinner fa-spin"></i></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Cloudlxy</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><div class="js-pjax"><script>window.typedJSFn = {
+  </div><div class="card-widget card-webinfo"><div class="item-headline"><i class="fas fa-chart-line"></i><span>网站信息</span></div><div class="webinfo"><div class="webinfo-item"><div class="item-name">文章数目 :</div><div class="item-count">1</div></div><div class="webinfo-item"><div class="item-name">最后更新时间 :</div><div class="item-count" id="last-push-date" data-lastPushDate="2026-10-10T03:16:12.118Z"><i class="fa-solid fa-spinner fa-spin"></i></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Cloudlxy</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><div class="js-pjax"><script>window.typedJSFn = {
   init: str => {
     window.typed = new Typed('#subtitle', Object.assign({
       strings: str,
@@ -379,111 +559,4 @@ btf.addGlobalFn('pjaxSendOnce', () => { typed && typed.destroy() }, 'typedDestro
 </script><script>function subtitleType () {
   typedJSFn.processSubtitle(["随便写点东西的地方"])
 }
-typedJSFn.run(subtitleType)</script></div><!-- 加载遮罩的 DOM 不在这里：它由 scripts/bg-loader.js 用 after_render:html
-     过滤器插到 body 的开头（必须先于这里被解析出来，才能第一眼就可见）。
-     本脚本运行的时候它已经在 DOM 里了，直接 getElementById 拿即可。 -->
-<script>
-/* 首页 banner 视频背景 + 加载进度条。
-   只在首页、桌面宽度、且用户没有开启「减少动态效果」时加载；
-   其余情况保留 index_img 的静态图作为兜底，所以永远不会白屏。
-   注意：路径写的是根路径（本站 root 为 /），若以后改成项目站点需要同步改。 */
-(function () {
-  var loader = document.getElementById('bg-loader');
-  var header = document.getElementById('page-header');
-  if (!loader) return;
-
-  /* 只在首页、桌面宽度、且用户没开「减少动态效果」时接管首屏；
-     其余情况直接把遮罩摘掉，保留主题自带的静态背景图。 */
-  var usable = header &&
-    header.classList.contains('full_page') &&
-    !window.matchMedia('(max-width: 768px)').matches &&
-    !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!usable) {
-    if (loader.parentNode) loader.parentNode.removeChild(loader);
-    return;
-  }
-
-  var fill = loader.querySelector('.fill');
-  var label = loader.querySelector('.label');
-  var finished = false;
-  var dismissed = false;
-
-  /* 遮罩不需要脚本打开：它由过滤器插在 body 开头，
-     CSS 的 media query 直接给了 display: flex，所以首屏第一眼就是它。
-     这里只负责在视频全部加载完之后把它淡出、把视频淡入。 */
-
-  var v = document.createElement('video');
-  v.id = 'bg-video';
-  v.src = '/video/bg-loop.mp4';
-  v.poster = '/img/bg-poster.jpg';
-  v.preload = 'auto';      /* 明确要求把整片拉下来，进度才有的可读 */
-  v.muted = true;          /* 不静音浏览器不允许自动播放 */
-  v.defaultMuted = true;
-  v.loop = true;
-  v.autoplay = true;
-  v.playsInline = true;
-  v.setAttribute('playsinline', '');
-  v.setAttribute('webkit-playsinline', '');
-  v.setAttribute('aria-hidden', 'true');
-  v.setAttribute('tabindex', '-1');
-  header.insertBefore(v, header.firstChild);
-
-  function setPct(ratio) {
-    var n = Math.max(0, Math.min(1, ratio));
-    var pct = Math.round(n * 100);
-    fill.style.width = pct + '%';
-    label.textContent = '视频加载中 ' + pct + '%';
-  }
-  function dismiss() {
-    if (dismissed) return;
-    dismissed = true;
-    loader.classList.add('is-off');
-    setTimeout(function () {
-      if (loader.parentNode) loader.parentNode.removeChild(loader);
-    }, 900);
-  }
-  /* 全部加载完：进度条补满、视频淡入、遮罩淡出，
-     三件事同时发生，所以是「一次性换到完整样式」而不是分段露出。 */
-  function finish() {
-    if (finished) return;
-    finished = true;
-    setPct(1);
-    v.classList.add('is-on');
-    dismiss();
-  }
-  /* 进度读数 =「已缓冲时长 / 全片时长」。
-     加载期间最多画到 99%，剩下 1% 留给 finish() 补满，
-     免得进度条停在 100% 却还在等。 */
-  function tick() {
-    if (finished) return;
-    var r = 0;
-    try {
-      if (v.duration && v.buffered.length) {
-        r = v.buffered.end(v.buffered.length - 1) / v.duration;
-      }
-    } catch (e) {}
-    setPct(Math.min(r, 0.99));
-    /* 判定「全部加载完」用 readyState >= 4（HAVE_ENOUGH_DATA，够播完整片），
-       或缓冲比已覆盖全片。不再拿 playing 当信号 —— playing 只说明开了个头，
-       之前正是它让遮罩在片子只到一部分时就撤了，于是"黑屏一点点往下拉"。 */
-    if (v.readyState >= 4 || r >= 0.995) finish();
-  }
-
-  v.addEventListener('loadedmetadata', tick);
-  v.addEventListener('progress', tick);
-  v.addEventListener('canplay', tick);
-  v.addEventListener('canplaythrough', tick);
-  v.addEventListener('playing', tick);
-  /* 视频拿不到就撤掉遮罩：静态图还在，不把人挡在外面 */
-  v.addEventListener('error', dismiss);
-  /* 兜底：20 秒还没加载完就先放行，不能让人一直等在加载页。
-     之后视频真就绪了 finish() 仍会让它淡入（那时人已经在看页面了）；
-     CSS 里还有一条 30 秒的动画兜底，专门对付脚本没跑起来的情况。 */
-  setTimeout(dismiss, 20000);
-
-  /* 少数浏览器仍会拦自动播放，这里再显式试一次，失败也无所谓（静态图还在） */
-  var p = v.play();
-  if (p && p.catch) p.catch(function () {});
-})();
-</script>
-<div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.7.0"></script></div></div></body></html>
+typedJSFn.run(subtitleType)</script></div><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.7.0"></script></div></div></body></html>
