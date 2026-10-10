@@ -227,32 +227,45 @@
 #page-header #post-info #post-meta {
   text-shadow: 0 2px 10px rgba(0, 0, 0, .55), 0 1px 3px rgba(0, 0, 0, .5);
 }
-/* ===== 首页视频的加载进度条 ===== */
-/* 层级：视频 0 → 主题遮罩 1 → 进度条 2 → #nav 90。
-   进度条只在视频没就绪时露出（加载超过 400ms 才显示，避免快网下一闪而过），
-   视频开播后补满并淡出、随后从 DOM 移除。
-   注意只加 z-index，不写 position，理由同上。 */
+/* ===== 首页的加载遮罩 + 进度条 ===== */
+/* 背景图到达之前，header 先垫一层和遮罩同色的墨绿。
+   浏览器默认底色是浅色/蓝调，图片没到的那一瞬就是之前看到的"蓝屏"。 */
+#page-header {
+  background-color: #071916;
+}
+/* 首屏整个被一层深色遮罩盖住（取画面的墨绿基调，避免先露出没背景图的空 header
+   —— 那就是之前看到的"蓝屏"），中间是进度条；视频能播放后遮罩淡出、视频淡入，
+   一次性呈现完整样式，不再有「先出一半画面、进度条后到」的中间态。
+   层级取 9000，压过 #nav(90) 和 #rightside(100)。
+   默认 opacity: 0 —— 万一把 JS 关了也只会什么都不显示，不会把人锁在黑屏里。 */
 #bg-loader {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 2;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9000;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 14px;
   opacity: 0;
-  transition: opacity .35s ease;
+  transition: opacity .45s ease;
   pointer-events: none;
+  background: radial-gradient(circle at 50% 42%, #0e2c28 0%, #071916 55%, #030b0a 100%);
 }
-#bg-loader.is-on { opacity: 1; }
+/* 淡入要快（150ms 内盖住首屏，保证第一眼就是进度条），淡出留 450ms 与视频交叉 */
+#bg-loader.is-on {
+  opacity: 1;
+  transition-duration: .15s;
+}
 #bg-loader .track {
   width: 220px;
   max-width: 44vw;
   height: 3px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, .26);
+  background: rgba(255, 255, 255, .22);
   overflow: hidden;
 }
 #bg-loader .fill {
@@ -280,7 +293,7 @@
 </head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">1</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">3</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div></div></div><div class="page" id="body-wrap"><header class="not-home-page fixed" id="page-header" style="background-image: url(/img/page-bg.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">xiaoyu's blog</span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="page-site-info"><h1 id="site-title">网络排查</h1></div></header><main class="layout" id="content-inner"><div id="tag"><div class="article-sort-title">标签 - 网络排查</div><div class="article-sort"><div class="article-sort-item year">2026</div><div class="article-sort-item no-article-cover"><div class="article-sort-item-info"><div class="article-sort-item-time"><i class="far fa-calendar-alt"></i><time class="post-meta-date-created" datetime="2026-05-11T10:06:37.000Z" title="发表于 2026-05-11 18:06:37">2026-05-11</time></div><a class="article-sort-item-title" href="/2026/05/11/dify-docker-network-conflict/" title="Dify 部署踩坑：Docker 网段冲突导致校外无法访问">Dify 部署踩坑：Docker 网段冲突导致校外无法访问</a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Cloudlxy</div><div class="author-info-description">随便写点东西，顺便记录踩过的坑。</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">1</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">3</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/Cloudlxy"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/Cloudlxy" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a></div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/05/11/dify-docker-network-conflict/" title="Dify 部署踩坑：Docker 网段冲突导致校外无法访问">Dify 部署踩坑：Docker 网段冲突导致校外无法访问</a><time datetime="2026-05-11T10:06:37.000Z" title="发表于 2026-05-11 18:06:37">2026-05-11</time></div></div></div></div><div class="card-widget card-categories"><div class="item-headline"><i class="fas fa-folder-open"></i><span>分类</span></div>
           <ul class="card-category-list" id="aside-cat-list">
             <li class="card-category-list-item "><a class="card-category-list-link" href="/categories/notes/"><span class="card-category-list-name">折腾记录</span><span class="card-category-list-count">1</span></a></li>
-          </ul></div><div class="card-widget card-tags"><div class="item-headline"><i class="fas fa-tags"></i><span>标签</span></div><div class="card-tag-cloud"><a href="/tags/%E7%BD%91%E7%BB%9C%E6%8E%92%E6%9F%A5/" style="font-size: 1.1em; color: #999">网络排查</a> <a href="/tags/Docker/" style="font-size: 1.1em; color: #999">Docker</a> <a href="/tags/Dify/" style="font-size: 1.1em; color: #999">Dify</a></div></div><div class="card-widget card-archives">
+          </ul></div><div class="card-widget card-tags"><div class="item-headline"><i class="fas fa-tags"></i><span>标签</span></div><div class="card-tag-cloud"><a href="/tags/Docker/" style="font-size: 1.1em; color: #999">Docker</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E6%8E%92%E6%9F%A5/" style="font-size: 1.1em; color: #999">网络排查</a> <a href="/tags/Dify/" style="font-size: 1.1em; color: #999">Dify</a></div></div><div class="card-widget card-archives">
     <div class="item-headline"><i class="fas fa-archive"></i><span>归档</span></div>
   
     <ul class="card-archive-list">
@@ -295,16 +308,44 @@
         </li>
       
     </ul>
-  </div><div class="card-widget card-webinfo"><div class="item-headline"><i class="fas fa-chart-line"></i><span>网站信息</span></div><div class="webinfo"><div class="webinfo-item"><div class="item-name">文章数目 :</div><div class="item-count">1</div></div><div class="webinfo-item"><div class="item-name">最后更新时间 :</div><div class="item-count" id="last-push-date" data-lastPushDate="2026-10-10T01:01:27.358Z"><i class="fa-solid fa-spinner fa-spin"></i></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Cloudlxy</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><div class="js-pjax"></div><script>
+  </div><div class="card-widget card-webinfo"><div class="item-headline"><i class="fas fa-chart-line"></i><span>网站信息</span></div><div class="webinfo"><div class="webinfo-item"><div class="item-name">文章数目 :</div><div class="item-count">1</div></div><div class="webinfo-item"><div class="item-name">最后更新时间 :</div><div class="item-count" id="last-push-date" data-lastPushDate="2026-10-10T01:36:49.945Z"><i class="fa-solid fa-spinner fa-spin"></i></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Cloudlxy</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><div class="js-pjax"></div><!-- 首页加载遮罩 + 进度条。刻意写成静态 HTML 而不是 JS 现造，
+     这样它能跟着首次绘制一起出现，第一眼就是进度条。
+     默认 opacity: 0，由下面的脚本加 .is-on 打开，
+     所以即使 JS 被禁也只会什么都不显示，不会把人锁在黑屏里。 -->
+<div id="bg-loader" aria-hidden="true">
+  <div class="track"><div class="fill"></div></div>
+  <div class="label">视频加载中 0%</div>
+</div>
+<script>
 /* 首页 banner 视频背景 + 加载进度条。
    只在首页、桌面宽度、且用户没有开启「减少动态效果」时加载；
    其余情况保留 index_img 的静态图作为兜底，所以永远不会白屏。
    注意：路径写的是根路径（本站 root 为 /），若以后改成项目站点需要同步改。 */
 (function () {
+  var loader = document.getElementById('bg-loader');
   var header = document.getElementById('page-header');
-  if (!header || !header.classList.contains('full_page')) return;
-  if (window.matchMedia('(max-width: 768px)').matches) return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!loader) return;
+
+  /* 只在首页、桌面宽度、且用户没开「减少动态效果」时接管首屏；
+     其余情况直接把遮罩摘掉，保留主题自带的静态背景图。 */
+  var usable = header &&
+    header.classList.contains('full_page') &&
+    !window.matchMedia('(max-width: 768px)').matches &&
+    !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!usable) {
+    if (loader.parentNode) loader.parentNode.removeChild(loader);
+    return;
+  }
+
+  var fill = loader.querySelector('.fill');
+  var label = loader.querySelector('.label');
+  var finished = false;
+  var dismissed = false;
+
+  /* 立刻打开遮罩 —— 这是本次的关键：
+     遮罩跟着文档一起绘制，所以第一眼就是进度条，
+     而不是还没背景图的空 header（之前那个"蓝屏"）。 */
+  loader.classList.add('is-on');
 
   var v = document.createElement('video');
   v.id = 'bg-video';
@@ -321,44 +362,32 @@
   v.setAttribute('tabindex', '-1');
   header.insertBefore(v, header.firstChild);
 
-  /* ---- 加载进度条 ---- */
-  var loader = document.createElement('div');
-  loader.id = 'bg-loader';
-  loader.setAttribute('aria-hidden', 'true');
-  loader.innerHTML =
-    '<div class="track"><div class="fill"></div></div>' +
-    '<div class="label">视频加载中 0%</div>';
-  header.appendChild(loader);
-
-  var fill = loader.querySelector('.fill');
-  var label = loader.querySelector('.label');
-  var finished = false;
-  var showTimer = setTimeout(function () { loader.classList.add('is-on'); }, 400);
-
-  function hide() {
-    clearTimeout(showTimer);
-    loader.classList.remove('is-on');
-  }
   function setPct(ratio) {
     var n = Math.max(0, Math.min(1, ratio));
-    var pct = finished ? 100 : Math.round(n * 100);
+    var pct = Math.round(n * 100);
     fill.style.width = pct + '%';
-    label.textContent = finished ? '加载完成' : ('视频加载中 ' + pct + '%');
+    label.textContent = '视频加载中 ' + pct + '%';
   }
-  function finish() {
-    if (finished) return;
-    finished = true;
-    clearTimeout(showTimer);
-    setPct(1);
-    v.classList.add('is-on');
-    setTimeout(function () { loader.classList.remove('is-on'); }, 320);
+  function dismiss() {
+    if (dismissed) return;
+    dismissed = true;
+    loader.classList.remove('is-on');
     setTimeout(function () {
       if (loader.parentNode) loader.parentNode.removeChild(loader);
     }, 900);
   }
+  /* 可以播放了：进度条补满、视频淡入、遮罩淡出，
+     三件事同时发生，所以是「一次性换到完整样式」而不是分段露出。 */
+  function finish() {
+    if (finished) return;
+    finished = true;
+    setPct(1);
+    v.classList.add('is-on');
+    dismiss();
+  }
   /* 用「已缓冲时长 / 全片时长」当读数。
      真正开播前最多只画到 92%，剩下 8% 留给 finish() 补满，
-     这样进度条不会长时间停在 100% 却还没画面。 */
+     免得进度条停在 100% 却还没画面。 */
   function tick() {
     if (finished) return;
     var r = 0;
@@ -369,15 +398,17 @@
     } catch (e) {}
     setPct(Math.min(r, 0.92));
   }
+
   v.addEventListener('loadedmetadata', tick);
   v.addEventListener('progress', tick);
   v.addEventListener('canplay', tick);
   v.addEventListener('canplaythrough', function () { if (!finished) setPct(0.92); });
   v.addEventListener('playing', finish);
-  /* 视频拿不到就悄悄收掉进度条：静态图还在，不打扰用户 */
-  v.addEventListener('error', hide);
-  /* 兜底：无论卡在哪一步，30 秒后都收掉 */
-  setTimeout(hide, 30000);
+  /* 视频拿不到就撤掉遮罩：静态图还在，不把人挡在外面 */
+  v.addEventListener('error', dismiss);
+  /* 慢网兜底：10 秒还没等到播放就先放行。
+     之后视频真就绪了 finish() 仍会让它淡入，那时人已经在看页面了。 */
+  setTimeout(dismiss, 10000);
 
   /* 少数浏览器仍会拦自动播放，这里再显式试一次，失败也无所谓（静态图还在） */
   var p = v.play();
