@@ -246,6 +246,54 @@
 #page-header #post-info #post-meta {
   text-shadow: 0 2px 10px rgba(0, 0, 0, .55), 0 1px 3px rgba(0, 0, 0, .5);
 }
+/* ===== 首页视频的加载进度条 ===== */
+/* 层级：视频 0 → 主题遮罩 1 → 进度条 2 → #nav 90。
+   进度条只在视频没就绪时露出（加载超过 400ms 才显示，避免快网下一闪而过），
+   视频开播后补满并淡出、随后从 DOM 移除。
+   注意只加 z-index，不写 position，理由同上。 */
+#bg-loader {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  transition: opacity .35s ease;
+  pointer-events: none;
+}
+#bg-loader.is-on { opacity: 1; }
+#bg-loader .track {
+  width: 220px;
+  max-width: 44vw;
+  height: 3px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, .26);
+  overflow: hidden;
+}
+#bg-loader .fill {
+  width: 0;
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #8ff0d0, #d9fff2);
+  transition: width .25s ease;
+}
+#bg-loader .label {
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: .08em;
+  color: rgba(255, 255, 255, .86);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, .5);
+}
+/* 视频就绪后淡入，省的从静态图硬切到画面 */
+#page-header #bg-video {
+  opacity: 0;
+  transition: opacity .6s ease;
+}
+#page-header #bg-video.is-on { opacity: 1; }
 </style>
 <meta name="generator" content="Hexo 7.3.0"><link rel="alternate" href="/atom.xml" title="xiaoyu's blog" type="application/atom+xml">
 </head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">1</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">3</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(/img/page-bg.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">xiaoyu's blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Dify 部署踩坑：Docker 网段冲突导致校外无法访问</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Dify 部署踩坑：Docker 网段冲突导致校外无法访问</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-05-11T10:06:37.000Z" title="发表于 2026-05-11 18:06:37">2026-05-11</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-10-09T07:49:58.792Z" title="更新于 2026-10-09 15:49:58">2026-10-09</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/notes/">折腾记录</a></span></div><div class="meta-secondline"></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>一台校园网里的服务器，Dify 用 Docker Compose 部署。这篇记录的是两个前后相连的故障：</p>
@@ -439,9 +487,9 @@
 </ol>
 <p><strong>顺手记一个坑</strong>：<code>ip link set br-xxx down</code> 只是关闭网桥，<strong>不会删除系统里残留的冲突路由</strong>，必须再用 <code>ip route del</code> 补一刀，否则路由表里那两条记录还在继续劫持流量。</p>
 </article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://cloudlxy.github.io">Cloudlxy</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://cloudlxy.github.io/2026/05/11/dify-docker-network-conflict/">https://cloudlxy.github.io/2026/05/11/dify-docker-network-conflict/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://cloudlxy.github.io" target="_blank">xiaoyu's blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Docker/">Docker</a><a class="post-meta__tags" href="/tags/Dify/">Dify</a><a class="post-meta__tags" href="/tags/%E7%BD%91%E7%BB%9C%E6%8E%92%E6%9F%A5/">网络排查</a></div><div class="post-share"><div class="social-share" data-image="/img/avatar.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Cloudlxy</div><div class="author-info-description">随便写点东西，顺便记录踩过的坑。</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">1</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">3</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/Cloudlxy"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/Cloudlxy" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83"><span class="toc-number">1.</span> <span class="toc-text">环境</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%E4%B8%80%EF%BC%9A%E6%A0%A1%E5%A4%96%E8%AE%BF%E9%97%AE%E4%B8%8D%E4%BA%86%EF%BC%8C%E6%98%AF-Docker-%E5%8A%AB%E6%8C%81%E4%BA%86%E8%B7%AF%E7%94%B1"><span class="toc-number">2.</span> <span class="toc-text">问题一：校外访问不了，是 Docker 劫持了路由</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8E%B0%E8%B1%A1"><span class="toc-number">2.1.</span> <span class="toc-text">现象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8E%9F%E5%9B%A0"><span class="toc-number">2.2.</span> <span class="toc-text">原因</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%84%E7%90%86"><span class="toc-number">2.3.</span> <span class="toc-text">处理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%AA%8C%E8%AF%81"><span class="toc-number">2.4.</span> <span class="toc-text">验证</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%E4%BA%8C%EF%BC%9A%E6%94%B9%E5%AE%8C%E4%B9%8B%E5%90%8E%EF%BC%8C%E4%BE%9D%E7%84%B6%E8%AE%BF%E9%97%AE%E4%B8%8D%E4%BA%86"><span class="toc-number">3.</span> <span class="toc-text">问题二：改完之后，依然访问不了</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8E%B0%E8%B1%A1-1"><span class="toc-number">3.1.</span> <span class="toc-text">现象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8E%92%E6%9F%A5"><span class="toc-number">3.2.</span> <span class="toc-text">排查</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B9%E5%9B%A0%EF%BC%9A%E5%88%A0%E4%BA%86%E8%B7%AF%E7%94%B1%EF%BC%8C%E5%8D%B4%E6%B2%A1%E9%87%8D%E5%BB%BA%E7%BD%91%E7%BB%9C"><span class="toc-number">3.3.</span> <span class="toc-text">根因：删了路由，却没重建网络</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BF%AE%E5%A4%8D"><span class="toc-number">3.4.</span> <span class="toc-text">修复</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%8E%E7%BB%AD%E4%BC%98%E5%8C%96"><span class="toc-number">3.5.</span> <span class="toc-text">后续优化</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%8D%E7%9B%98"><span class="toc-number">4.</span> <span class="toc-text">复盘</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/05/11/dify-docker-network-conflict/" title="Dify 部署踩坑：Docker 网段冲突导致校外无法访问">Dify 部署踩坑：Docker 网段冲突导致校外无法访问</a><time datetime="2026-05-11T10:06:37.000Z" title="发表于 2026-05-11 18:06:37">2026-05-11</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Cloudlxy</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><div class="js-pjax"></div><script>
-/* 首页 banner 视频背景。
+/* 首页 banner 视频背景 + 加载进度条。
    只在首页、桌面宽度、且用户没有开启「减少动态效果」时加载；
-   其余情况保留 index_img 的静态图作为兜底。
+   其余情况保留 index_img 的静态图作为兜底，所以永远不会白屏。
    注意：路径写的是根路径（本站 root 为 /），若以后改成项目站点需要同步改。 */
 (function () {
   var header = document.getElementById('page-header');
@@ -463,6 +511,64 @@
   v.setAttribute('aria-hidden', 'true');
   v.setAttribute('tabindex', '-1');
   header.insertBefore(v, header.firstChild);
+
+  /* ---- 加载进度条 ---- */
+  var loader = document.createElement('div');
+  loader.id = 'bg-loader';
+  loader.setAttribute('aria-hidden', 'true');
+  loader.innerHTML =
+    '<div class="track"><div class="fill"></div></div>' +
+    '<div class="label">视频加载中 0%</div>';
+  header.appendChild(loader);
+
+  var fill = loader.querySelector('.fill');
+  var label = loader.querySelector('.label');
+  var finished = false;
+  var showTimer = setTimeout(function () { loader.classList.add('is-on'); }, 400);
+
+  function hide() {
+    clearTimeout(showTimer);
+    loader.classList.remove('is-on');
+  }
+  function setPct(ratio) {
+    var n = Math.max(0, Math.min(1, ratio));
+    var pct = finished ? 100 : Math.round(n * 100);
+    fill.style.width = pct + '%';
+    label.textContent = finished ? '加载完成' : ('视频加载中 ' + pct + '%');
+  }
+  function finish() {
+    if (finished) return;
+    finished = true;
+    clearTimeout(showTimer);
+    setPct(1);
+    v.classList.add('is-on');
+    setTimeout(function () { loader.classList.remove('is-on'); }, 320);
+    setTimeout(function () {
+      if (loader.parentNode) loader.parentNode.removeChild(loader);
+    }, 900);
+  }
+  /* 用「已缓冲时长 / 全片时长」当读数。
+     真正开播前最多只画到 92%，剩下 8% 留给 finish() 补满，
+     这样进度条不会长时间停在 100% 却还没画面。 */
+  function tick() {
+    if (finished) return;
+    var r = 0;
+    try {
+      if (v.duration && v.buffered.length) {
+        r = v.buffered.end(v.buffered.length - 1) / v.duration;
+      }
+    } catch (e) {}
+    setPct(Math.min(r, 0.92));
+  }
+  v.addEventListener('loadedmetadata', tick);
+  v.addEventListener('progress', tick);
+  v.addEventListener('canplay', tick);
+  v.addEventListener('canplaythrough', function () { if (!finished) setPct(0.92); });
+  v.addEventListener('playing', finish);
+  /* 视频拿不到就悄悄收掉进度条：静态图还在，不打扰用户 */
+  v.addEventListener('error', hide);
+  /* 兜底：无论卡在哪一步，30 秒后都收掉 */
+  setTimeout(hide, 30000);
 
   /* 少数浏览器仍会拦自动播放，这里再显式试一次，失败也无所谓（静态图还在） */
   var p = v.play();
